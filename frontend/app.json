@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Focus Pixel",
+    "slug": "focus-pixel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"]
+  }
+}
