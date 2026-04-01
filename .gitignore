@@ -1,0 +1,35 @@
+# [System & IDE]
+.DS_Store
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.vscode/
+
+# [Backend - Spring Boot]
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.project
+backend/.settings
+backend/.classpath
+backend/bin/
+backend/src/main/resources/application-secret.yml
+
+# [Frontend - React Native / Expo]
+frontend/node_modules/
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# [Database]
+*.db
+*.sqlite
