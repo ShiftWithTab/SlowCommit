@@ -78,6 +78,14 @@ public class DailyTaskService {
     }
 
     private boolean shouldGenerate(Task task, LocalDate today) {
+        if (today.isBefore(task.getStartDate())) {
+            return false;
+        }
+
+        if (task.getRepeatCycle() <= 0) {
+            return false;
+        }
+
         long diff = ChronoUnit.DAYS.between(task.getStartDate(), today);
         return diff % task.getRepeatCycle() == 0;
     }
