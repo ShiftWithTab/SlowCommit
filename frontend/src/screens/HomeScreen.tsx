@@ -5,6 +5,7 @@ import CategoryChip from '../components/CategoryChip';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
 import TaskSection from '../components/TaskSection';
+import DailyTaskSection from '../components/DailyTaskSection';
 import { mockCategories, mockSummary, mockTasks } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
@@ -23,9 +24,6 @@ export default function HomeScreen() {
         loadUsername();
     }, []);
 
-    const studyTasks = mockTasks.filter((task) => task.categoryId === 2);
-    const jobTasks = mockTasks.filter((task) => task.categoryId === 3);
-
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <Text style={styles.title}>{username ? `${username}님, 오늘도 한 칸 전진` : '오늘도 한 칸 전진'}</Text>
@@ -39,8 +37,11 @@ export default function HomeScreen() {
 
             <PixelCard message={mockSummary.message} />
             <MonthlyCalendar />
-            <TaskSection title="Study (ex. 코딩테스트 풀기)" color={colors.pink} tasks={studyTasks} />
-            <TaskSection title="Resume (ex. 자소서 작성)" color={colors.mint} tasks={jobTasks} />
+                    <TaskSection
+            title="Study (ex. 코딩테스트 풀기)"
+            color={colors.pink}
+            tasks={studyTasks}
+        />
         </ScrollView>
     );
 }

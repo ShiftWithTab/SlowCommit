@@ -1,0 +1,97 @@
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { api } from '../api/client';
+
+export default function DailyTaskSection({
+                                             taskId,
+                                             title
+                                         }: {
+    taskId: number;
+    title: string;
+}) {
+    const [completed, setCompleted] = useState(false);
+    const [dailyTaskId, setDailyTaskId] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchTask();
+    }, []);
+
+    const fetchTask = async () => {
+        try {
+            const res = await api.get(`/daily-tasks/active/${taskId}`);
+
+            console.log('응답:', res.data);
+
+            setCompleted(res.data.completed);
+            setDailyTaskId(res.data.dailyTaskId);
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const toggleTask = async () => {
+        console.log('터치됨', dailyTaskId);
+
+        if (!dailyTaskId) {
+            console.log('dailyTaskId 없음');
+            return;
+        }
+
+        try {
+            const res = await api.patch(`/daily-tasks/${dailyTaskId}/toggle`);
+
+            setCompleted(res.data.completed);
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    return (
+        <Pressable style={styles.taskRow} onPress={toggleTask}>
+            <View style={[styles.checkbox, completed && styles.checkboxDone]}>
+                {completed && <Text style={styles.check}>✓</Text>}
+            </View>
+
+            <Text style={[styles.taskText, completed && styles.doneText]}>
+                {title}
+            </Text>
+        </Pressable>
+    );
+}
+
+const styles = StyleSheet.create({
+    taskRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 14
+    },
+    checkbox: {
+        width: 24,
+        height: 24,
+        borderWidth: 2,
+        borderColor: '#d7d7d7',
+        borderRadius: 6,
+        marginRight: 12,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    checkboxDone: {
+        backgroundColor: '#7f7f7f',
+        borderColor: '#7f7f7f'
+    },
+    check: {
+        color: '#fff',
+        fontWeight: '800'
+    },
+    taskText: {
+        fontSize: 18,
+        flex: 1,
+        color: '#fff'
+    },
+    doneText: {
+        textDecorationLine: 'line-through',
+        color: '#7e7e7e'
+    }
+});
