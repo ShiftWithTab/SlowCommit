@@ -2,6 +2,11 @@ spring:
   config:
     import: application-secret.yml
 
+  security:
+    user:
+      name: ${SWAGGER_USER}
+      password: ${SWAGGER_PASSWORD}
+
   datasource:
     url: jdbc:mysql://slow-commit-db.cng6882sm6bl.ap-southeast-2.rds.amazonaws.com:3306/base?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     driver-class-name: com.mysql.cj.jdbc.Driver
