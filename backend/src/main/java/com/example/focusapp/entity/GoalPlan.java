@@ -36,6 +36,19 @@ public class GoalPlan {
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "goal_definition_id", insertable = false, updatable = false)
+    private GoalDefinition goalDefinition;
+
+    @OneToOne
+    @JoinColumn(
+            name = "id",
+            referencedColumnName = "goal_plan_id",
+            insertable = false,
+            updatable = false
+    )
+    private GoalConfig goalConfig;
+
     public Integer getId() { return id; }
     public Integer getGoalDefinitionId() { return goalDefinitionId; }
     public void setGoalDefinitionId(Integer goalDefinitionId) { this.goalDefinitionId = goalDefinitionId; }
@@ -49,4 +62,10 @@ public class GoalPlan {
     public void setCurrentLevel(Integer currentLevel) { this.currentLevel = currentLevel; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public GoalDefinition getGoalDefinition() {
+        return goalDefinition;
+    }
+    public GoalConfig getGoalConfig() {
+        return goalConfig;
+    }
 }

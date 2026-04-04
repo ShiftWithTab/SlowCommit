@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(
         name = "daily_tasks",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"task_id", "target_date"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"goal_plan_id", "target_date"})
 )
 @Getter
 @Setter
@@ -22,9 +22,9 @@ public class DailyTask {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "task_id")
-    private Task task;
+    @ManyToOne
+    @JoinColumn(name = "goal_plan_id", nullable = false)
+    private GoalPlan goalPlan;
 
     @Column(nullable = false)
     private LocalDate targetDate;
@@ -34,8 +34,8 @@ public class DailyTask {
 
     private LocalDateTime completedAt;
 
-    public DailyTask(Task task, LocalDate targetDate) {
-        this.task = task;
+    public DailyTask(GoalPlan goalPlan, LocalDate targetDate) {
+        this.goalPlan = goalPlan;
         this.targetDate = targetDate;
     }
 }

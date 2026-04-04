@@ -1,8 +1,8 @@
 package com.example.focusapp.dto;
 
 public record DailyTaskResponse(
-        Long dailyTaskId,
-        Long taskId,
+        Long id,
+        Integer goalPlanId,
         String title,
         boolean completed
 ) {}

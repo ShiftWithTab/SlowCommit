@@ -3,10 +3,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api/client';
 
 export default function DailyTaskSection({
-                                             taskId,
+                                             goalPlanId,
                                              title
                                          }: {
-    taskId: number;
+    goalPlanId: number;
     title: string;
 }) {
     const [completed, setCompleted] = useState(false);
@@ -18,7 +18,7 @@ export default function DailyTaskSection({
 
     const fetchTask = async () => {
         try {
-            const res = await api.get(`/daily-tasks/active/${taskId}`);
+            const res = await api.get(`/daily-tasks/active/${goalPlanId}`);
 
             console.log('응답:', res.data);
 
@@ -26,14 +26,12 @@ export default function DailyTaskSection({
             setDailyTaskId(res.data.dailyTaskId);
 
         } catch (err) {
-            console.log(err);
+            console.log('조회 실패:', err);
         }
     };
 
     const toggleTask = async () => {
-        console.log('터치됨', dailyTaskId);
-
-        if (!dailyTaskId) {
+        if (dailyTaskId === null) {
             console.log('dailyTaskId 없음');
             return;
         }
@@ -41,10 +39,12 @@ export default function DailyTaskSection({
         try {
             const res = await api.patch(`/daily-tasks/${dailyTaskId}/toggle`);
 
+            console.log('토글 응답:', res.data);
+
             setCompleted(res.data.completed);
 
         } catch (err) {
-            console.log(err);
+            console.log('토글 실패:', err);
         }
     };
 

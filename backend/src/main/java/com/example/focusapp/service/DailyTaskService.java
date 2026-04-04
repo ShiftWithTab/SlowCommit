@@ -2,9 +2,10 @@ package com.example.focusapp.service;
 
 import com.example.focusapp.dto.DailyTaskResponse;
 import com.example.focusapp.entity.DailyTask;
-import com.example.focusapp.entity.Task;
+import com.example.focusapp.entity.GoalConfig;
+import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.repository.DailyTaskRepository;
-import com.example.focusapp.repository.TaskRepository;
+import com.example.focusapp.repository.GoalPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,25 +22,34 @@ import java.util.List;
 public class DailyTaskService {
 
     private final DailyTaskRepository dailyTaskRepository;
-    private final TaskRepository taskRepository;
+    private final GoalPlanRepository goalPlanRepository;
 
+    /**
+     * 목표 생성 직후 오늘 DailyTask 생성
+     */
     @Transactional
-    public void generateTodayTask(Task task) {
+    public void generateTodayTask(GoalPlan goalPlan) {
         LocalDate today = LocalDate.now();
 
-        if (shouldGenerate(task, today)
-                && !dailyTaskRepository.existsByTaskAndTargetDate(task, today)) {
+        if (shouldGenerate(goalPlan, today)
+                && !dailyTaskRepository.existsByGoalPlanAndTargetDate(goalPlan, today)) {
 
-            dailyTaskRepository.save(new DailyTask(task, today));
+            dailyTaskRepository.save(new DailyTask(goalPlan, today));
         }
     }
 
-    public DailyTask getActiveTask(Task task, LocalDate today) {
+    /**
+     * 오늘 화면에 보여줄 활성 DailyTask 조회
+     */
+    public DailyTask getActiveTask(GoalPlan goalPlan, LocalDate today) {
         return dailyTaskRepository
-                .findFirstByTaskAndTargetDateLessThanEqualOrderByTargetDateDesc(task, today)
+                .findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(goalPlan, today)
                 .orElseThrow(() -> new RuntimeException("활성 DailyTask 없음"));
     }
 
+    /**
+     * 체크 토글
+     */
     @Transactional
     public DailyTaskResponse toggle(Long id) {
         DailyTask dailyTask = dailyTaskRepository.findById(id)
@@ -55,38 +65,51 @@ public class DailyTaskService {
 
         return new DailyTaskResponse(
                 dailyTask.getId(),
-                dailyTask.getTask().getId(),
-                dailyTask.getTask().getTitle(),
+                dailyTask.getGoalPlan().getId(),
+                dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
                 dailyTask.isCompleted()
         );
     }
 
+    /**
+     * 매일 자정 전체 목표 DailyTask 생성
+     */
     @Transactional
     @Scheduled(cron = "0 0 0 * * *")
     public void generateDailyTasks() {
         LocalDate today = LocalDate.now();
 
-        List<Task> tasks = taskRepository.findAll();
+        List<GoalPlan> goalPlans = goalPlanRepository.findAll();
 
-        for (Task task : tasks) {
-            if (shouldGenerate(task, today)
-                    && !dailyTaskRepository.existsByTaskAndTargetDate(task, today)) {
+        for (GoalPlan goalPlan : goalPlans) {
+            if (shouldGenerate(goalPlan, today)
+                    && !dailyTaskRepository.existsByGoalPlanAndTargetDate(goalPlan, today)) {
 
-                dailyTaskRepository.save(new DailyTask(task, today));
+                dailyTaskRepository.save(new DailyTask(goalPlan, today));
             }
         }
     }
 
-    private boolean shouldGenerate(Task task, LocalDate today) {
-        if (today.isBefore(task.getStartDate())) {
+    /**
+     * 생성 조건 계산
+     */
+    private boolean shouldGenerate(GoalPlan goalPlan, LocalDate today) {
+        GoalConfig goalConfig = goalPlan.getGoalConfig();
+
+        if (goalConfig == null) {
             return false;
         }
 
-        if (task.getRepeatCycle() <= 0) {
+        if (today.isBefore(goalPlan.getStartDate())) {
             return false;
         }
 
-        long diff = ChronoUnit.DAYS.between(task.getStartDate(), today);
-        return diff % task.getRepeatCycle() == 0;
+        if (goalConfig.getAlarmCycle() <= 0) {
+            return false;
+        }
+
+        long diff = ChronoUnit.DAYS.between(goalPlan.getStartDate(), today);
+
+        return diff % goalConfig.getAlarmCycle() == 0;
     }
 }
