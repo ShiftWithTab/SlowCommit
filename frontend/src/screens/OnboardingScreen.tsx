@@ -80,7 +80,7 @@ export default function OnboardingScreen() {
 
             console.log('✅ createGuestUser 성공 응답:', data);
 
-            setUserId(data.id);
+            setUserId(data.userId);
             goNext();
         } catch (error) {
             console.error(error);
@@ -123,6 +123,7 @@ export default function OnboardingScreen() {
                 userId,
                 username: nickname.trim(),
             });
+            console.log('📡nickname 변경 완료 : ' + nickname);
             goNext();
         } catch (error) {
             console.error(error);

@@ -18,7 +18,7 @@ public class GoalPlan {
     @Column(name = "character_id")
     private Integer characterId;
 
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "startDate", nullable = false)
     private LocalDate startDate;
 
     @Column(name = "end_date", nullable = false)

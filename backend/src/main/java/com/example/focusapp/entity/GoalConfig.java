@@ -11,8 +11,8 @@ public class GoalConfig {
     @Column(name = "goal_plan_id")
     private Integer goalPlanId;
 
-    @Column(name = "alarm_cycle", nullable = false)
-    private Integer alarmCycle;
+    @Column(name = "repeatCycle", nullable = false)
+    private Integer repeatCycle;
 
     @Column(name = "preferred_emoji", length = 20)
     private String preferredEmoji;
