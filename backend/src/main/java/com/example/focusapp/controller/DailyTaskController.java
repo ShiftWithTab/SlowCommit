@@ -2,8 +2,8 @@ package com.example.focusapp.controller;
 
 import com.example.focusapp.dto.DailyTaskResponse;
 import com.example.focusapp.entity.DailyTask;
-import com.example.focusapp.entity.Task;
-import com.example.focusapp.repository.TaskRepository;
+import com.example.focusapp.entity.GoalPlan;
+import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.service.DailyTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +18,19 @@ import java.time.LocalDate;
 public class DailyTaskController {
 
     private final DailyTaskService dailyTaskService;
-    private final TaskRepository taskRepository;
+    private final GoalPlanRepository goalPlanRepository;
 
-    @GetMapping("/active/{taskId}")
-    public DailyTaskResponse getActiveTask(@PathVariable Long taskId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("task 없음: " + taskId));
+    @GetMapping("/active/{goalPlanId}")
+    public DailyTaskResponse getActiveTask(@PathVariable Integer goalPlanId) {
+        GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
+                .orElseThrow(() -> new RuntimeException("goalPlan 없음: " + goalPlanId));
 
-        DailyTask dailyTask = dailyTaskService.getActiveTask(task, LocalDate.now());
+        DailyTask dailyTask = dailyTaskService.getActiveTask(goalPlan, LocalDate.now());
 
         return new DailyTaskResponse(
                 dailyTask.getId(),
-                dailyTask.getTask().getId(),
-                dailyTask.getTask().getTitle(),
+                dailyTask.getGoalPlan().getId(),
+                dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
                 dailyTask.isCompleted()
         );
     }

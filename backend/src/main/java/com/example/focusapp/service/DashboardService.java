@@ -1,20 +1,38 @@
 package com.example.focusapp.service;
 
 import com.example.focusapp.dto.DashboardResponse;
-import com.example.focusapp.repository.TaskRepository;
+import com.example.focusapp.repository.GoalPlanRepository;
+import com.example.focusapp.repository.DailyTaskRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DashboardService {
-    private final TaskRepository taskRepository;
 
-    public DashboardService(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
+    private final GoalPlanRepository goalPlanRepository;
+    private final DailyTaskRepository dailyTaskRepository;
+
+    public DashboardService(
+            GoalPlanRepository goalPlanRepository,
+            DailyTaskRepository dailyTaskRepository
+    ) {
+        this.goalPlanRepository = goalPlanRepository;
+        this.dailyTaskRepository = dailyTaskRepository;
     }
 
     public DashboardResponse getSummary() {
-        long total = taskRepository.count();
-        long completed = taskRepository.findAll().stream().filter(task -> task.isCompleted()).count();
-        return new DashboardResponse(49, completed, total, "네이버, 카카오 가즈아!");
+        long total = goalPlanRepository.count();
+
+        long completed = dailyTaskRepository
+                .findAll()
+                .stream()
+                .filter(d -> d.isCompleted())
+                .count();
+
+        return new DashboardResponse(
+                49,
+                completed,
+                total,
+                "네이버, 카카오 가즈아!"
+        );
     }
 }
