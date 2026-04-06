@@ -14,16 +14,15 @@ export default function DailyTaskSection({
 
     useEffect(() => {
         fetchTask();
-    }, []);
+    }, [goalPlanId]);
 
     const fetchTask = async () => {
         try {
             const res = await api.get(`/daily-tasks/active/${goalPlanId}`);
-
             console.log('응답:', res.data);
 
             setCompleted(res.data.completed);
-            setDailyTaskId(res.data.dailyTaskId);
+            setDailyTaskId(res.data.id);
 
         } catch (err) {
             console.log('조회 실패:', err);
@@ -38,7 +37,6 @@ export default function DailyTaskSection({
 
         try {
             const res = await api.patch(`/daily-tasks/${dailyTaskId}/toggle`);
-
             console.log('토글 응답:', res.data);
 
             setCompleted(res.data.completed);

@@ -24,9 +24,6 @@ public class DailyTaskService {
     private final DailyTaskRepository dailyTaskRepository;
     private final GoalPlanRepository goalPlanRepository;
 
-    /**
-     * 목표 생성 직후 오늘 DailyTask 생성
-     */
     @Transactional
     public void generateTodayTask(GoalPlan goalPlan) {
         LocalDate today = LocalDate.now();
@@ -38,18 +35,12 @@ public class DailyTaskService {
         }
     }
 
-    /**
-     * 오늘 화면에 보여줄 활성 DailyTask 조회
-     */
     public DailyTask getActiveTask(GoalPlan goalPlan, LocalDate today) {
         return dailyTaskRepository
                 .findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(goalPlan, today)
                 .orElseThrow(() -> new RuntimeException("활성 DailyTask 없음"));
     }
 
-    /**
-     * 체크 토글
-     */
     @Transactional
     public DailyTaskResponse toggle(Long id) {
         DailyTask dailyTask = dailyTaskRepository.findById(id)
@@ -63,6 +54,8 @@ public class DailyTaskService {
             dailyTask.setCompletedAt(null);
         }
 
+        dailyTaskRepository.save(dailyTask);
+
         return new DailyTaskResponse(
                 dailyTask.getId(),
                 dailyTask.getGoalPlan().getId(),
@@ -71,9 +64,6 @@ public class DailyTaskService {
         );
     }
 
-    /**
-     * 매일 자정 전체 목표 DailyTask 생성
-     */
     @Transactional
     @Scheduled(cron = "0 0 0 * * *")
     public void generateDailyTasks() {
@@ -90,9 +80,6 @@ public class DailyTaskService {
         }
     }
 
-    /**
-     * 생성 조건 계산
-     */
     private boolean shouldGenerate(GoalPlan goalPlan, LocalDate today) {
         GoalConfig goalConfig = goalPlan.getGoalConfig();
 
@@ -100,7 +87,7 @@ public class DailyTaskService {
             return false;
         }
 
-        if (today.isBefore(goalPlan.getStartDate())) {
+        if (today.isBefore(goalPlan.getStartDate()) || today.isAfter(goalPlan.getEndDate())) {
             return false;
         }
 
