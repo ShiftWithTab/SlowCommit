@@ -11,7 +11,7 @@ import { STORAGE_KEYS } from '../constants/storage';
 
 export default function HomeScreen() {
     const [username, setUsername] = useState('');
-    const studyTasks = mockTasks.filter((task) => task.categoryId === 1);
+    
     useEffect(() => {
         const loadUsername = async () => {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
@@ -36,7 +36,7 @@ export default function HomeScreen() {
 
             <PixelCard message={mockSummary.message} />
             <MonthlyCalendar />
-            <DailyTaskSection goalPlanId={1} title="매일 코딩하기" />
+            <DailyTaskSection goalPlanId={1} />
         </ScrollView>
     );
 }

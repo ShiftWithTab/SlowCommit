@@ -3,14 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api/client';
 
 export default function DailyTaskSection({
-                                             goalPlanId,
-                                             title
+                                             goalPlanId
                                          }: {
     goalPlanId: number;
-    title: string;
 }) {
     const [completed, setCompleted] = useState(false);
     const [dailyTaskId, setDailyTaskId] = useState<number | null>(null);
+    const [taskTitle, setTaskTitle] = useState('');
 
     useEffect(() => {
         fetchTask();
@@ -23,6 +22,7 @@ export default function DailyTaskSection({
 
             setCompleted(res.data.completed);
             setDailyTaskId(res.data.id);
+            setTaskTitle(res.data.title);
 
         } catch (err) {
             console.log('조회 실패:', err);
@@ -43,6 +43,8 @@ export default function DailyTaskSection({
 
         } catch (err) {
             console.log('토글 실패:', err);
+        } finally {
+            await fetchTask();
         }
     };
 
@@ -53,7 +55,7 @@ export default function DailyTaskSection({
             </View>
 
             <Text style={[styles.taskText, completed && styles.doneText]}>
-                {title}
+                {taskTitle}
             </Text>
         </Pressable>
     );
