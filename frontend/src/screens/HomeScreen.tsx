@@ -4,14 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import CategoryChip from '../components/CategoryChip';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
-import TaskSection from '../components/TaskSection';
+import DailyTaskSection from '../components/DailyTaskSection';
 import { mockCategories, mockSummary, mockTasks } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 
 export default function HomeScreen() {
     const [username, setUsername] = useState('');
-
+    const studyTasks = mockTasks.filter((task) => task.categoryId === 1);
     useEffect(() => {
         const loadUsername = async () => {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
@@ -22,9 +22,6 @@ export default function HomeScreen() {
 
         loadUsername();
     }, []);
-
-    const studyTasks = mockTasks.filter((task) => task.categoryId === 2);
-    const jobTasks = mockTasks.filter((task) => task.categoryId === 3);
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -39,8 +36,7 @@ export default function HomeScreen() {
 
             <PixelCard message={mockSummary.message} />
             <MonthlyCalendar />
-            <TaskSection title="Study (ex. 코딩테스트 풀기)" color={colors.pink} tasks={studyTasks} />
-            <TaskSection title="Resume (ex. 자소서 작성)" color={colors.mint} tasks={jobTasks} />
+            <DailyTaskSection goalPlanId={1} title="매일 코딩하기" />
         </ScrollView>
     );
 }

@@ -9,6 +9,7 @@ import com.example.focusapp.repository.GoalConfigRepository;
 import com.example.focusapp.repository.GoalDefinitionRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.repository.UserRepository;
+import com.example.focusapp.service.DailyTaskService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,17 +20,20 @@ public class OnboardingService {
     private final GoalDefinitionRepository goalDefinitionRepository;
     private final GoalPlanRepository goalPlanRepository;
     private final GoalConfigRepository goalConfigRepository;
+    private final DailyTaskService dailyTaskService;
 
     public OnboardingService(
             UserRepository userRepository,
             GoalDefinitionRepository goalDefinitionRepository,
             GoalPlanRepository goalPlanRepository,
-            GoalConfigRepository goalConfigRepository
+            GoalConfigRepository goalConfigRepository,
+            DailyTaskService dailyTaskService
     ) {
         this.userRepository = userRepository;
         this.goalDefinitionRepository = goalDefinitionRepository;
         this.goalPlanRepository = goalPlanRepository;
         this.goalConfigRepository = goalConfigRepository;
+        this.dailyTaskService = dailyTaskService;
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +130,9 @@ public class OnboardingService {
         goalConfig.setAlarmCycle(request.getAlarmCycle());
         goalConfig.setPreferredEmoji(request.getPreferredEmoji());
         goalConfigRepository.save(goalConfig);
+
+        // 주기에 따른 체크리스트 생성
+        dailyTaskService.generateTodayTask(goalPlan);
 
         return new SetupResponse(
                 goalDefinition.getId(),

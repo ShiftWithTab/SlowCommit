@@ -1,0 +1,41 @@
+package com.example.focusapp.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(
+        name = "daily_tasks",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"goal_plan_id", "target_date"})
+)
+@Getter
+@Setter
+@NoArgsConstructor
+public class DailyTask {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "goal_plan_id", nullable = false)
+    private GoalPlan goalPlan;
+
+    @Column(nullable = false)
+    private LocalDate targetDate;
+
+    @Column(nullable = false)
+    private boolean completed = false;
+
+    private LocalDateTime completedAt;
+
+    public DailyTask(GoalPlan goalPlan, LocalDate targetDate) {
+        this.goalPlan = goalPlan;
+        this.targetDate = targetDate;
+    }
+}
