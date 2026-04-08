@@ -17,8 +17,9 @@ public class OnboardingController {
         this.onboardingService = onboardingService;
     }
     @GetMapping("/check-nickname")
-    public NicknameCheckResponse checkNickname(@RequestParam String nickname) {
-        return onboardingService.checkNickname(nickname);
+    public NicknameCheckResponse checkNickname(@RequestParam String username) {
+        System.out.println("🔥 check-nickname 호출됨, username = " + username);
+        return onboardingService.checkNickname(username);
     }
 
     @GetMapping("/status")
