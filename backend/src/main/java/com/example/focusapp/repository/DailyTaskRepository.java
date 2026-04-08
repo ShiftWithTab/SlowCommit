@@ -5,6 +5,7 @@ import com.example.focusapp.entity.GoalPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
@@ -15,4 +16,8 @@ public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
             GoalPlan goalPlan,
             LocalDate today
     );
+
+    long countByGoalPlan(GoalPlan goalPlan);
+
+    long countByGoalPlanAndCompletedTrue(GoalPlan goalPlan);
 }

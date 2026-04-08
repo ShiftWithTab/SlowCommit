@@ -25,7 +25,7 @@ public class GoalPlan {
     private LocalDate endDate;
 
     @Column(name = "current_level", nullable = false)
-    private Integer currentLevel;
+    private Integer currentLevel = 1;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
