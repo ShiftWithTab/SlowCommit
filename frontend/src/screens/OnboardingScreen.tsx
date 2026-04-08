@@ -5,7 +5,6 @@ import {
     Alert,
     Pressable,
     SafeAreaView,
-    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -25,10 +24,10 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { STORAGE_KEYS } from '../constants/storage';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회', '평일'];
+const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회'];
 
 export default function OnboardingScreen() {
     const navigation = useNavigation<NavigationProp>();
@@ -83,11 +82,9 @@ export default function OnboardingScreen() {
             case '매일':
                 return 1;
             case '주 3회':
-                return 2;
+                return 3;
             case '주 5회':
-                return 1;
-            case '평일':
-                return 1;
+                return 5;
             default:
                 return 1;
         }
@@ -178,6 +175,12 @@ export default function OnboardingScreen() {
 
             console.log('✅ onboarding 완료:', onboardingResult);
 
+            console.log('저장할 goalPlanId:', onboardingResult.goalPlanId);
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.GOAL_PLAN_ID,
+                String(onboardingResult.goalPlanId)
+            );
             navigation.reset({
                 index: 0,
                 routes: [
@@ -224,11 +227,12 @@ export default function OnboardingScreen() {
                             <Pressable
                                 style={[styles.button, { backgroundColor: '#444', marginTop: 10 }]}
                                 onPress={async () => {
-                                    await AsyncStorage.setItem('goalPlanId', '1');
-                                    navigation.replace('MainTabs', { userId: 1 });
+                                    await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '8');
+                                    await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, '7');
+                                    navigation.replace('MainTabs', { userId: 7 });
                                 }}
                             >
-                                <Text style={styles.buttonText}>DEV 바로 시작 (userId=1)</Text>
+                                <Text style={styles.buttonText}>DEV 바로 시작 (userId=7)</Text>
                             </Pressable>
                         </View>
                     </View>

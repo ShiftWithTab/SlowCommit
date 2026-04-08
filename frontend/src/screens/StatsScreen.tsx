@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ScrollView, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../api/client';
 import { colors } from '../theme/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../constants/storage';
 
 export default function StatsScreen() {
   const [stats, setStats] = useState({
@@ -11,17 +14,33 @@ export default function StatsScreen() {
     currentLevel: 1
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+      useCallback(() => {
+        fetchStats();
+      }, [])
+  );
 
   const fetchStats = async () => {
     try {
-      const res = await api.get('/stats/1');
+      const userId = Number(await AsyncStorage.getItem(STORAGE_KEYS.USER_ID));
+      console.log('stats fetch 호출 userId : ' + userId);
+      if (!userId) return;
+
+      const res = await api.get(`/stats/${userId}`);
+
       setStats(res.data);
     } catch (err) {
       console.log('stats 조회 실패:', err);
     }
+  };
+
+  const onRefresh = async () => {
+    console.log('새로고침');
+    setRefreshing(true);
+    await fetchStats();
+    setRefreshing(false);
   };
 
   const rate =
@@ -30,12 +49,22 @@ export default function StatsScreen() {
           : Math.round((stats.completedCount / stats.totalCount) * 100);
 
   return (
-      <View style={styles.container}>
+      <ScrollView
+          style={styles.container}
+          contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+      >
         <Text style={styles.title}>Stats</Text>
 
         <View style={styles.card}>
           <Text style={styles.label}>완료율</Text>
           <Text style={styles.value}>{rate}%</Text>
+
+          <View style={styles.progressBackground}>
+            <View style={[styles.progressFill, { width: `${rate}%` }]} />
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -52,10 +81,9 @@ export default function StatsScreen() {
           <Text style={styles.label}>현재 성장 단계</Text>
           <Text style={styles.value}>Lv.{stats.currentLevel}</Text>
         </View>
-      </View>
+      </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -86,5 +114,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 32,
     fontWeight: '900'
-  }
+  },
+  progressBackground: {
+    marginTop: 14,
+    height: 12,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 999,
+    overflow: 'hidden'
+  },
+
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4ade80',
+    borderRadius: 999
+  },
 });

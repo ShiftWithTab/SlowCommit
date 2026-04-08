@@ -4,9 +4,10 @@ import com.example.focusapp.dto.DailyTaskResponse;
 import com.example.focusapp.entity.DailyTask;
 import com.example.focusapp.entity.GoalConfig;
 import com.example.focusapp.entity.GoalPlan;
+import com.example.focusapp.exception.NotFoundException;
 import com.example.focusapp.repository.DailyTaskRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
-import com.example.focusapp.exception.NotFoundException;
+import com.example.focusapp.repository.GoalConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,32 +20,55 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class DailyTaskService {
 
     private final DailyTaskRepository dailyTaskRepository;
     private final GoalPlanRepository goalPlanRepository;
+    private final GoalConfigRepository goalConfigRepository;
 
+    /**
+     * 온보딩 직후 전체 기간 task 생성
+     */
     @Transactional
-    public void generateTodayTask(GoalPlan goalPlan) {
-        System.out.println("🔥 generateTodayTask 호출됨 goalPlanId=" + goalPlan.getId());
-        LocalDate today = LocalDate.now();
+    public void generateInitialTasks(GoalPlan goalPlan) {
+        System.out.println("🔥 generateInitialTasks 시작 goalPlanId=" + goalPlan.getId());
 
-        if (shouldGenerate(goalPlan, today)
-                && !dailyTaskRepository.existsByGoalPlanAndTargetDate(goalPlan, today)) {
+        GoalConfig config = goalConfigRepository.findByGoalPlan(goalPlan)
+                .orElseThrow(() -> new RuntimeException("GoalConfig 없음"));
 
-            dailyTaskRepository.save(new DailyTask(goalPlan, today));
+        LocalDate date = goalPlan.getStartDate();
+
+        while (!date.isAfter(goalPlan.getEndDate())) {
+            if (!dailyTaskRepository.existsByGoalPlanAndTargetDate(goalPlan, date)) {
+                DailyTask task = new DailyTask();
+                task.setGoalPlan(goalPlan);
+                task.setTargetDate(date);
+                task.setCompleted(false);
+                task.setTitle(goalPlan.getGoalDefinition().getTitle());
+
+                dailyTaskRepository.save(task);
+
+                System.out.println("✅ task 생성: " + date);
+            }
+
+            date = date.plusDays(config.getAlarmCycle());
         }
     }
 
+    /**
+     * 오늘 활성 task 조회
+     */
+    @Transactional(readOnly = true)
     public DailyTask getActiveTask(GoalPlan goalPlan, LocalDate today) {
         return dailyTaskRepository
-                .findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(goalPlan, today)
+                .findTopByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(goalPlan, today)
                 .orElseThrow(() -> new NotFoundException("활성 DailyTask 없음"));
     }
-
+    /**
+     * 완료 토글
+     */
     @Transactional
-    public DailyTaskResponse toggle(Long id) {
+    public DailyTaskResponse toggle(Integer id) {
         DailyTask dailyTask = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("DailyTask 없음"));
 
@@ -56,20 +80,21 @@ public class DailyTaskService {
             dailyTask.setCompletedAt(null);
         }
 
-        // dailyTaskRepository.save(dailyTask);
-
         GoalPlan goalPlan = dailyTask.getGoalPlan();
         recalculateLevel(goalPlan);
 
         return new DailyTaskResponse(
                 dailyTask.getId(),
-                dailyTask.getGoalPlan().getId(),
-                dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
+                goalPlan.getId(),
+                dailyTask.getTitle(),
                 dailyTask.isCompleted(),
                 goalPlan.getCurrentLevel()
         );
     }
 
+    /**
+     * 매일 자정 누락 task 생성
+     */
     @Transactional
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void generateDailyTasks() {
@@ -82,17 +107,25 @@ public class DailyTaskService {
             if (shouldGenerate(goalPlan, today)
                     && !dailyTaskRepository.existsByGoalPlanAndTargetDate(goalPlan, today)) {
 
-                dailyTaskRepository.save(new DailyTask(goalPlan, today));
+                DailyTask task = new DailyTask();
+                task.setGoalPlan(goalPlan);
+                task.setTargetDate(today);
+                task.setCompleted(false);
+                task.setTitle(goalPlan.getGoalDefinition().getTitle());
+
+                dailyTaskRepository.save(task);
+                System.out.println("✅ scheduler task 생성 goalPlanId=" + goalPlan.getId());
             }
         }
     }
 
+    /**
+     * 생성 주기 판단
+     */
     private boolean shouldGenerate(GoalPlan goalPlan, LocalDate today) {
         GoalConfig goalConfig = goalPlan.getGoalConfig();
 
-        if (goalConfig == null) {
-            return false;
-        }
+        if (goalConfig == null) return false;
 
         if (today.isBefore(goalPlan.getStartDate()) || today.isAfter(goalPlan.getEndDate())) {
             return false;
@@ -107,6 +140,9 @@ public class DailyTaskService {
         return diff % goalConfig.getAlarmCycle() == 0;
     }
 
+    /**
+     * 레벨 재계산
+     */
     private void recalculateLevel(GoalPlan goalPlan) {
         long total = dailyTaskRepository.countByGoalPlan(goalPlan);
         long completed = dailyTaskRepository.countByGoalPlanAndCompletedTrue(goalPlan);

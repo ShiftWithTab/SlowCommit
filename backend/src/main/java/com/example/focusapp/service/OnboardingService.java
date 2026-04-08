@@ -117,24 +117,31 @@ public class OnboardingService {
         goalDefinition = goalDefinitionRepository.save(goalDefinition);
 
         GoalPlan goalPlan = new GoalPlan();
-        goalPlan.setGoalDefinitionId(goalDefinition.getId());
+        goalPlan.setGoalDefinition(goalDefinition);
         goalPlan.setCharacterId(request.getCharacterId());
         goalPlan.setStartDate(request.getStartDate());
         goalPlan.setEndDate(request.getEndDate());
-        goalPlan.setCurrentLevel(1); // 레벨은 1로 초기화
+        goalPlan.setCurrentLevel(1); // 레벨 1로 초기화
         goalPlan.setStatus("PROCEEDING");
+        goalPlan.setUser(user);
+
         goalPlan = goalPlanRepository.save(goalPlan);
 
+        System.out.println("saved goalPlan id = " + goalPlan.getId());
+        System.out.println("saved user = " + goalPlan.getUser().getId());
+        System.out.println("saved goalDefinition = " + goalPlan.getGoalDefinition().getId());
+
         // 주기 생성
-        GoalConfig goalConfig = new GoalConfig();
-        goalConfig.setGoalPlanId(goalPlan.getId());
-        goalConfig.setGoalPlan(goalPlan);
-        goalConfig.setAlarmCycle(request.getAlarmCycle());
-        goalConfig.setPreferredEmoji(request.getPreferredEmoji());
+        GoalConfig goalConfig = GoalConfig.builder()
+                .goalPlan(goalPlan)
+                .alarmCycle(request.getAlarmCycle())
+                .preferredEmoji(request.getPreferredEmoji())
+                .build();
 
-        goalConfigRepository.saveAndFlush(goalConfig);
+        goalConfigRepository.save(goalConfig);
+        goalPlan.setGoalConfig(goalConfig);
 
-        dailyTaskService.generateTodayTask(
+        dailyTaskService.generateInitialTasks(
                 goalPlanRepository.findById(goalPlan.getId()).orElseThrow()
         );
 

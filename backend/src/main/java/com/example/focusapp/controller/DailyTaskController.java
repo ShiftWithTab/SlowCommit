@@ -23,22 +23,29 @@ public class DailyTaskController {
 
     @GetMapping("/active/{goalPlanId}")
     public DailyTaskResponse getActiveTask(@PathVariable Integer goalPlanId) {
+        System.out.println("goalPlanId = " + goalPlanId);
+
+        boolean exists = goalPlanRepository.existsById(goalPlanId);
+        System.out.println("exists = " + exists);
+
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음: " + goalPlanId));
+
+        System.out.println("found = " + goalPlan.getId());
 
         DailyTask dailyTask = dailyTaskService.getActiveTask(goalPlan, LocalDate.now());
 
         return new DailyTaskResponse(
                 dailyTask.getId(),
                 dailyTask.getGoalPlan().getId(),
-                dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
+                dailyTask.getTitle(),
                 dailyTask.isCompleted(),
                 goalPlan.getCurrentLevel()
         );
     }
 
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Long id) {
+    public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Integer id) {
         return ResponseEntity.ok(dailyTaskService.toggle(id));
     }
 }
