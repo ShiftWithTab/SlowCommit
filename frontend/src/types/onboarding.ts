@@ -28,9 +28,10 @@ export type SetupRequest = {
     goalTitle: string;
     motto: string;
     characterId: number;
+    characterName : string;
     startDate: string;
     endDate: string;
-    alarmCycle: string;
+    alarmCycle: number;
     preferredEmoji: string;
 };
 

@@ -27,6 +27,7 @@ public class DailyTaskService {
 
     @Transactional
     public void generateTodayTask(GoalPlan goalPlan) {
+        System.out.println("🔥 generateTodayTask 호출됨 goalPlanId=" + goalPlan.getId());
         LocalDate today = LocalDate.now();
 
         if (shouldGenerate(goalPlan, today)

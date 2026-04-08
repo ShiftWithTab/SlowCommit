@@ -7,6 +7,7 @@ import GoalSetupScreen from '../screens/GoalSetupScreen';
 import HomeScreen from '../screens/HomeScreen';
 import StatsScreen from '../screens/StatsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
 
@@ -52,7 +53,8 @@ function MainTabs({ route }: any) {
 
 export default function RootNavigator() {
     return (
-        <Stack.Navigator initialRouteName="Init" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Init" component={InitScreen} />
             <Stack.Screen name="Username" component={UsernameScreen} />
             <Stack.Screen name="GoalSetup" component={GoalSetupScreen} />

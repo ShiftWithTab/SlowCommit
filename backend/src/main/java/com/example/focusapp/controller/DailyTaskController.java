@@ -5,6 +5,7 @@ import com.example.focusapp.entity.DailyTask;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.service.DailyTaskService;
+import com.example.focusapp.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class DailyTaskController {
     @GetMapping("/active/{goalPlanId}")
     public DailyTaskResponse getActiveTask(@PathVariable Integer goalPlanId) {
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
-                .orElseThrow(() -> new RuntimeException("goalPlan 없음: " + goalPlanId));
+                .orElseThrow(() -> new NotFoundException("GoalPlan 없음: " + goalPlanId));
 
         DailyTask dailyTask = dailyTaskService.getActiveTask(goalPlan, LocalDate.now());
 

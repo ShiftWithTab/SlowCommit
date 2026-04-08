@@ -121,18 +121,22 @@ public class OnboardingService {
         goalPlan.setCharacterId(request.getCharacterId());
         goalPlan.setStartDate(request.getStartDate());
         goalPlan.setEndDate(request.getEndDate());
-        goalPlan.setCurrentLevel(0);
+        goalPlan.setCurrentLevel(1); // 레벨은 1로 초기화
         goalPlan.setStatus("PROCEEDING");
         goalPlan = goalPlanRepository.save(goalPlan);
 
+        // 주기 생성
         GoalConfig goalConfig = new GoalConfig();
         goalConfig.setGoalPlanId(goalPlan.getId());
+        goalConfig.setGoalPlan(goalPlan);
         goalConfig.setAlarmCycle(request.getAlarmCycle());
         goalConfig.setPreferredEmoji(request.getPreferredEmoji());
-        goalConfigRepository.save(goalConfig);
 
-        // 주기에 따른 체크리스트 생성
-        dailyTaskService.generateTodayTask(goalPlan);
+        goalConfigRepository.saveAndFlush(goalConfig);
+
+        dailyTaskService.generateTodayTask(
+                goalPlanRepository.findById(goalPlan.getId()).orElseThrow()
+        );
 
         return new SetupResponse(
                 goalDefinition.getId(),

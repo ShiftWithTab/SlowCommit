@@ -9,19 +9,34 @@ import { mockCategories, mockSummary } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 
-export default function HomeScreen() {
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../types/navigation';
+
+type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
+
+export default function HomeScreen({ route }: Props) {
+    const { userId } = route.params;
     const [username, setUsername] = useState('');
     const [currentLevel, setCurrentLevel] = useState<number | null>(null);
+    const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
+
+    console.log(":::userId:::" + userId);
 
     useEffect(() => {
-        const loadUsername = async () => {
+        const loadData = async () => {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
+            const savedGoalPlanId = await AsyncStorage.getItem(STORAGE_KEYS.GOAL_PLAN_ID);
+
             if (savedUsername) {
                 setUsername(savedUsername);
             }
+
+            if (savedGoalPlanId) {
+                setGoalPlanId(Number(savedGoalPlanId));
+            }
         };
 
-        loadUsername();
+        loadData();
     }, []);
 
     return (
@@ -48,10 +63,12 @@ export default function HomeScreen() {
 
             <MonthlyCalendar />
 
-            <DailyTaskSection
-                goalPlanId={1}
-                onLevelChange={setCurrentLevel}
-            />
+            {goalPlanId && (
+                <DailyTaskSection
+                    goalPlanId={goalPlanId}
+                    onLevelChange={setCurrentLevel}
+                />
+            )}
         </ScrollView>
     );
 }

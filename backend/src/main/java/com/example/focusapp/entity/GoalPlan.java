@@ -40,13 +40,7 @@ public class GoalPlan {
     @JoinColumn(name = "goal_definition_id", insertable = false, updatable = false)
     private GoalDefinition goalDefinition;
 
-    @OneToOne
-    @JoinColumn(
-            name = "id",
-            referencedColumnName = "goal_plan_id",
-            insertable = false,
-            updatable = false
-    )
+    @OneToOne(mappedBy = "goalPlan")
     private GoalConfig goalConfig;
 
     public Integer getId() { return id; }
