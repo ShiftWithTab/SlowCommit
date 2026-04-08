@@ -5,13 +5,14 @@ import CategoryChip from '../components/CategoryChip';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
 import DailyTaskSection from '../components/DailyTaskSection';
-import { mockCategories, mockSummary, mockTasks } from '../api/mock';
+import { mockCategories, mockSummary } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 
 export default function HomeScreen() {
     const [username, setUsername] = useState('');
-    
+    const [currentLevel, setCurrentLevel] = useState<number | null>(null);
+
     useEffect(() => {
         const loadUsername = async () => {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
@@ -25,8 +26,13 @@ export default function HomeScreen() {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Text style={styles.title}>{username ? `${username}님, 오늘도 한 칸 전진` : '오늘도 한 칸 전진'}</Text>
-            <Text style={styles.subtitle}>{mockSummary.streak}일째 루틴 이어가는 중</Text>
+            <Text style={styles.title}>
+                {username ? `${username}님, 오늘도 한 칸 전진` : '오늘도 한 칸 전진'}
+            </Text>
+
+            <Text style={styles.subtitle}>
+                {mockSummary.streak}일째 루틴 이어가는 중
+            </Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
                 {mockCategories.map((category) => (
@@ -35,8 +41,17 @@ export default function HomeScreen() {
             </ScrollView>
 
             <PixelCard message={mockSummary.message} />
+
+            <Text style={styles.level}>
+                {currentLevel === null ? '불러오는 중...' : `현재 성장 단계 Lv.${currentLevel} / 10`}
+            </Text>
+
             <MonthlyCalendar />
-            <DailyTaskSection goalPlanId={1} />
+
+            <DailyTaskSection
+                goalPlanId={1}
+                onLevelChange={setCurrentLevel}
+            />
         </ScrollView>
     );
 }
@@ -63,5 +78,12 @@ const styles = StyleSheet.create({
     },
     chipRow: {
         marginTop: 18,
+    },
+    level: {
+        color: colors.text,
+        fontSize: 18,
+        fontWeight: '700',
+        marginTop: 14,
+        marginBottom: 12,
     },
 });

@@ -3,9 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api/client';
 
 export default function DailyTaskSection({
-                                             goalPlanId
+                                             goalPlanId,
+                                             onLevelChange
                                          }: {
     goalPlanId: number;
+    onLevelChange?: (level: number) => void;
 }) {
     const [completed, setCompleted] = useState(false);
     const [dailyTaskId, setDailyTaskId] = useState<number | null>(null);
@@ -18,11 +20,14 @@ export default function DailyTaskSection({
     const fetchTask = async () => {
         try {
             const res = await api.get(`/daily-tasks/active/${goalPlanId}`);
-            console.log('응답:', res.data);
 
             setCompleted(res.data.completed);
             setDailyTaskId(res.data.id);
             setTaskTitle(res.data.title);
+
+            if (res.data.currentLevel !== undefined) {
+                onLevelChange?.(res.data.currentLevel);
+            }
 
         } catch (err) {
             console.log('조회 실패:', err);
@@ -37,9 +42,12 @@ export default function DailyTaskSection({
 
         try {
             const res = await api.patch(`/daily-tasks/${dailyTaskId}/toggle`);
-            console.log('토글 응답:', res.data);
 
             setCompleted(res.data.completed);
+
+            if (res.data.currentLevel !== undefined) {
+                onLevelChange?.(res.data.currentLevel);
+            }
 
         } catch (err) {
             console.log('토글 실패:', err);

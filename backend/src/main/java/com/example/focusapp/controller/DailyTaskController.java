@@ -31,7 +31,8 @@ public class DailyTaskController {
                 dailyTask.getId(),
                 dailyTask.getGoalPlan().getId(),
                 dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
-                dailyTask.isCompleted()
+                dailyTask.isCompleted(),
+                goalPlan.getCurrentLevel()
         );
     }
 

@@ -6,6 +6,7 @@ import com.example.focusapp.entity.GoalConfig;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.repository.DailyTaskRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
+import com.example.focusapp.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,13 +39,13 @@ public class DailyTaskService {
     public DailyTask getActiveTask(GoalPlan goalPlan, LocalDate today) {
         return dailyTaskRepository
                 .findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(goalPlan, today)
-                .orElseThrow(() -> new RuntimeException("활성 DailyTask 없음"));
+                .orElseThrow(() -> new NotFoundException("활성 DailyTask 없음"));
     }
 
     @Transactional
     public DailyTaskResponse toggle(Long id) {
         DailyTask dailyTask = dailyTaskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("DailyTask 없음"));
+                .orElseThrow(() -> new NotFoundException("DailyTask 없음"));
 
         dailyTask.setCompleted(!dailyTask.isCompleted());
 
@@ -54,22 +55,27 @@ public class DailyTaskService {
             dailyTask.setCompletedAt(null);
         }
 
-        dailyTaskRepository.save(dailyTask);
+        // dailyTaskRepository.save(dailyTask);
+
+        GoalPlan goalPlan = dailyTask.getGoalPlan();
+        recalculateLevel(goalPlan);
 
         return new DailyTaskResponse(
                 dailyTask.getId(),
                 dailyTask.getGoalPlan().getId(),
                 dailyTask.getGoalPlan().getGoalDefinition().getTitle(),
-                dailyTask.isCompleted()
+                dailyTask.isCompleted(),
+                goalPlan.getCurrentLevel()
         );
     }
 
     @Transactional
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void generateDailyTasks() {
         LocalDate today = LocalDate.now();
 
-        List<GoalPlan> goalPlans = goalPlanRepository.findAll();
+        List<GoalPlan> goalPlans =
+                goalPlanRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
 
         for (GoalPlan goalPlan : goalPlans) {
             if (shouldGenerate(goalPlan, today)
@@ -98,5 +104,22 @@ public class DailyTaskService {
         long diff = ChronoUnit.DAYS.between(goalPlan.getStartDate(), today);
 
         return diff % goalConfig.getAlarmCycle() == 0;
+    }
+
+    private void recalculateLevel(GoalPlan goalPlan) {
+        long total = dailyTaskRepository.countByGoalPlan(goalPlan);
+        long completed = dailyTaskRepository.countByGoalPlanAndCompletedTrue(goalPlan);
+
+        if (total == 0) {
+            goalPlan.setCurrentLevel(1);
+            return;
+        }
+
+        int level = (int) Math.round((double) completed / total * 10);
+
+        if (level < 1) level = 1;
+        if (level > 10) level = 10;
+
+        goalPlan.setCurrentLevel(level);
     }
 }

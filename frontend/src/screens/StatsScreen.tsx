@@ -1,26 +1,58 @@
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { mockSummary } from '../api/mock';
+import { api } from '../api/client';
 import { colors } from '../theme/colors';
 
 export default function StatsScreen() {
-  const rate = Math.round((mockSummary.completedCount / mockSummary.totalCount) * 100);
+  const [stats, setStats] = useState({
+    completedCount: 0,
+    totalCount: 0,
+    streak: 0,
+    currentLevel: 1
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/stats/1');
+      setStats(res.data);
+    } catch (err) {
+      console.log('stats 조회 실패:', err);
+    }
+  };
+
+  const rate =
+      stats.totalCount === 0
+          ? 0
+          : Math.round((stats.completedCount / stats.totalCount) * 100);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Stats</Text>
-      <View style={styles.card}>
-        <Text style={styles.label}>완료율</Text>
-        <Text style={styles.value}>{rate}%</Text>
+      <View style={styles.container}>
+        <Text style={styles.title}>Stats</Text>
+
+        <View style={styles.card}>
+          <Text style={styles.label}>완료율</Text>
+          <Text style={styles.value}>{rate}%</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.label}>연속 달성일</Text>
+          <Text style={styles.value}>{stats.streak}일</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.label}>완료된 할 일</Text>
+          <Text style={styles.value}>{stats.completedCount}개</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.label}>현재 성장 단계</Text>
+          <Text style={styles.value}>Lv.{stats.currentLevel}</Text>
+        </View>
       </View>
-      <View style={styles.card}>
-        <Text style={styles.label}>연속 달성일</Text>
-        <Text style={styles.value}>{mockSummary.streak}일</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.label}>완료된 할 일</Text>
-        <Text style={styles.value}>{mockSummary.completedCount}개</Text>
-      </View>
-    </View>
   );
 }
 
