@@ -242,12 +242,12 @@ export default function OnboardingScreen() {
                             <Pressable
                                 style={[styles.button, { backgroundColor: '#444', marginTop: 10 }]}
                                 onPress={async () => {
-                                    await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '8');
-                                    await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, '7');
-                                    navigation.replace('MainTabs', { userId: 7 });
+                                    await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '13');
+                                    await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, '13');
+                                    navigation.replace('MainTabs', { userId: 13 });
                                 }}
                             >
-                                <Text style={styles.buttonText}>DEV 바로 시작 (userId=7)</Text>
+                                <Text style={styles.buttonText}>DEV 바로 시작 (userId=13)</Text>
                             </Pressable>
                         </View>
                     </View>
