@@ -41,7 +41,7 @@ export default function OnboardingScreen() {
     const [nicknameMessage, setNicknameMessage] = useState('');
 
     const [goalTitle, setGoalTitle] = useState('');
-    const [deadline, setDeadline] = useState('2026-06-30');
+    const [deadline, setDeadline] = useState('2026-04-30');
     const [cycle, setCycle] = useState<CycleOption>('주 5회');
     const [characterName, setCharacterName] = useState('');
 
@@ -153,6 +153,8 @@ export default function OnboardingScreen() {
     };
 
     const handleComplete = async () => {
+        if (submitLoading) return;
+
         if (!userId) {
             Alert.alert('오류', '사용자 정보가 없어요.');
             return;
@@ -175,12 +177,21 @@ export default function OnboardingScreen() {
 
             console.log('✅ onboarding 완료:', onboardingResult);
 
-            console.log('저장할 goalPlanId:', onboardingResult.goalPlanId);
-
             await AsyncStorage.setItem(
                 STORAGE_KEYS.GOAL_PLAN_ID,
                 String(onboardingResult.goalPlanId)
             );
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.USER_ID,
+                String(userId)
+            );
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.USERNAME,
+                String(nickname)
+            );
+
             navigation.reset({
                 index: 0,
                 routes: [
@@ -190,9 +201,13 @@ export default function OnboardingScreen() {
                     },
                 ],
             });
-        } catch (error) {
-            console.error(error);
-            Alert.alert('설정 완료 실패', '목표 저장 중 문제가 발생했어요.');
+
+        } catch (error: any) {
+            console.log('🔥 setup error status:', error.response?.status);
+            console.log('🔥 setup error data:', error.response?.data);
+            console.log('🔥 setup error message:', error.message);
+
+            Alert.alert('설정 완료 실패', error.message);
         } finally {
             setSubmitLoading(false);
         }

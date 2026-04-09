@@ -127,9 +127,13 @@ public class OnboardingService {
 
         goalPlan = goalPlanRepository.save(goalPlan);
 
-        System.out.println("saved goalPlan id = " + goalPlan.getId());
-        System.out.println("saved user = " + goalPlan.getUser().getId());
-        System.out.println("saved goalDefinition = " + goalPlan.getGoalDefinition().getId());
+        System.out.println(
+                "[OnboardingService] ✅ setup 저장 완료 | goalPlanId=" + goalPlan.getId()
+                        + ", userId=" + goalPlan.getUser().getId()
+                        + ", goalDefinitionId=" + goalPlan.getGoalDefinition().getId()
+                        + ", alarmCycle=" + request.getAlarmCycle()
+                        + ", emoji=" + request.getPreferredEmoji()
+        );
 
         // 주기 생성
         GoalConfig goalConfig = GoalConfig.builder()
@@ -138,12 +142,9 @@ public class OnboardingService {
                 .preferredEmoji(request.getPreferredEmoji())
                 .build();
 
-        goalConfigRepository.save(goalConfig);
-        goalPlan.setGoalConfig(goalConfig);
+        goalConfigRepository.saveAndFlush(goalConfig);
 
-        dailyTaskService.generateInitialTasks(
-                goalPlanRepository.findById(goalPlan.getId()).orElseThrow()
-        );
+        dailyTaskService.generateInitialTasks(goalPlan);
 
         return new SetupResponse(
                 goalDefinition.getId(),

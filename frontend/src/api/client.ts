@@ -2,5 +2,15 @@ import axios from 'axios';
 
 export const api = axios.create({
   baseURL: 'http://192.168.219.105:8080/api',
-  timeout: 5000
+  timeout: 10000
 });
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+      console.log('🔥 axios error:', error.message);
+      console.log('🔥 axios status:', error.response?.status);
+      console.log('🔥 axios data:', error.response?.data);
+      return Promise.reject(error);
+    }
+);
