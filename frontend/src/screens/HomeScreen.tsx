@@ -1,31 +1,61 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, Text, RefreshControl } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+
 import CategoryChip from '../components/CategoryChip';
 import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
 import DailyTaskSection from '../components/DailyTaskSection';
+
 import { mockCategories, mockSummary } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 
-export default function HomeScreen() {
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { MainTabParamList } from '../types/navigation';
+
+type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
+
+export default function HomeScreen({ route }: Props) {
     const [username, setUsername] = useState('');
     const [currentLevel, setCurrentLevel] = useState<number | null>(null);
+    const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        const loadUsername = async () => {
-            const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
-            if (savedUsername) {
-                setUsername(savedUsername);
-            }
-        };
+    const loadData = async () => {
+        const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
+        const savedGoalPlanId = await AsyncStorage.getItem(STORAGE_KEYS.GOAL_PLAN_ID);
 
-        loadUsername();
-    }, []);
+        if (savedUsername) {
+            setUsername(savedUsername);
+        }
+
+        if (savedGoalPlanId) {
+            setGoalPlanId(Number(savedGoalPlanId));
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            loadData();
+        }, [])
+    );
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadData();
+        setRefreshing(false);
+    };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+        >
             <Text style={styles.title}>
                 {username ? `${username}님, 오늘도 한 칸 전진` : '오늘도 한 칸 전진'}
             </Text>
@@ -40,18 +70,17 @@ export default function HomeScreen() {
                 ))}
             </ScrollView>
 
-            <PixelCard message={mockSummary.message} />
-
-            <Text style={styles.level}>
-                {currentLevel === null ? '불러오는 중...' : `현재 성장 단계 Lv.${currentLevel} / 10`}
-            </Text>
+            <PixelCard message={currentLevel === null ? '불러오는 중...' : `현재 성장 단계 Lv.${currentLevel} / 10`}
+            />
 
             <MonthlyCalendar />
 
-            <DailyTaskSection
-                goalPlanId={1}
-                onLevelChange={setCurrentLevel}
-            />
+            {goalPlanId && (
+                <DailyTaskSection
+                    goalPlanId={goalPlanId}
+                    onLevelChange={setCurrentLevel}
+                />
+            )}
         </ScrollView>
     );
 }

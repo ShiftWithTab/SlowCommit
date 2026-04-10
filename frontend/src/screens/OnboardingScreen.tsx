@@ -5,7 +5,6 @@ import {
     Alert,
     Pressable,
     SafeAreaView,
-    ScrollView,
     StatusBar,
     StyleSheet,
     Text,
@@ -21,10 +20,18 @@ import {
     setupOnboarding,
 } from '../api/onboardingApi';
 import type { CycleOption, Step } from '../types/onboarding';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../types/navigation';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { STORAGE_KEYS } from '../constants/storage';
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회', '평일'];
+const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회'];
 
 export default function OnboardingScreen() {
+    const navigation = useNavigation<NavigationProp>();
+
     const [step, setStep] = useState<Step>(1);
     const [userId, setUserId] = useState<number | null>(null);
 
@@ -34,13 +41,12 @@ export default function OnboardingScreen() {
     const [nicknameMessage, setNicknameMessage] = useState('');
 
     const [goalTitle, setGoalTitle] = useState('');
-    const [deadline, setDeadline] = useState('2026-06-30');
+    const [deadline, setDeadline] = useState('2026-04-30');
     const [cycle, setCycle] = useState<CycleOption>('주 5회');
     const [characterName, setCharacterName] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
-
     const progressText = useMemo(() => `${Math.min(step, 6)}/6`, [step]);
     const progressWidth = useMemo<DimensionValue>(
         () => `${(Math.min(step, 6) / 6) * 100}%`,
@@ -55,7 +61,7 @@ export default function OnboardingScreen() {
 
     const goNext = () =>
         setStep((prev) => {
-            if (prev === 7) return 7;
+            if (prev === 6) return 6;
             return (prev + 1) as Step;
         });
 
@@ -69,6 +75,19 @@ export default function OnboardingScreen() {
         setNicknameChecked(false);
         setNicknameAvailable(null);
         setNicknameMessage('');
+    };
+
+    const cycleToNumber = (cycle: CycleOption): number => {
+        switch (cycle) {
+            case '매일':
+                return 1;
+            case '주 3회':
+                return 3;
+            case '주 5회':
+                return 5;
+            default:
+                return 1;
+        }
     };
 
     const handleStart = async () => {
@@ -134,6 +153,8 @@ export default function OnboardingScreen() {
     };
 
     const handleComplete = async () => {
+        if (submitLoading) return;
+
         if (!userId) {
             Alert.alert('오류', '사용자 정보가 없어요.');
             return;
@@ -141,20 +162,52 @@ export default function OnboardingScreen() {
 
         try {
             setSubmitLoading(true);
-            await setupOnboarding({
+
+            const onboardingResult = await setupOnboarding({
                 userId,
                 goalTitle: goalTitle.trim(),
                 motto: `${goalTitle.trim()} 꾸준히 달성하기`,
                 characterId: 1,
+                characterName: characterName.trim(),
                 startDate: new Date().toISOString().slice(0, 10),
                 endDate: deadline,
-                alarmCycle: cycle,
+                alarmCycle: cycleToNumber(cycle),
                 preferredEmoji: '🌱',
             });
-            goNext();
-        } catch (error) {
-            console.error(error);
-            Alert.alert('설정 완료 실패', '목표 저장 중 문제가 발생했어요.');
+
+            console.log('✅ onboarding 완료:', onboardingResult);
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.GOAL_PLAN_ID,
+                String(onboardingResult.goalPlanId)
+            );
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.USER_ID,
+                String(userId)
+            );
+
+            await AsyncStorage.setItem(
+                STORAGE_KEYS.USERNAME,
+                String(nickname)
+            );
+
+            navigation.reset({
+                index: 0,
+                routes: [
+                    {
+                        name: 'MainTabs',
+                        params: { userId },
+                    },
+                ],
+            });
+
+        } catch (error: any) {
+            console.log('🔥 setup error status:', error.response?.status);
+            console.log('🔥 setup error data:', error.response?.data);
+            console.log('🔥 setup error message:', error.message);
+
+            Alert.alert('설정 완료 실패', error.message);
         } finally {
             setSubmitLoading(false);
         }
@@ -184,6 +237,18 @@ export default function OnboardingScreen() {
 
                         <View style={styles.footer}>
                             <PrimaryButton label="시작하기" loading={loading} onPress={handleStart} />
+
+                            {/* 테스트 계정들어가기 나중에 삭제할 것 */}
+                            <Pressable
+                                style={[styles.button, { backgroundColor: '#444', marginTop: 10 }]}
+                                onPress={async () => {
+                                    await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '13');
+                                    await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, '13');
+                                    navigation.replace('MainTabs', { userId: 13 });
+                                }}
+                            >
+                                <Text style={styles.buttonText}>DEV 바로 시작 (userId=13)</Text>
+                            </Pressable>
                         </View>
                     </View>
                 ) : step === 2 ? (
@@ -330,22 +395,7 @@ export default function OnboardingScreen() {
                             placeholder="예: 꾸미"
                         />
                     </StepLayout>
-                ) : (
-                    <ScrollView contentContainerStyle={styles.mainContent}>
-                        <Text style={styles.mainHeaderTitle}>안녕, {nickname} 👋</Text>
-                        <Text style={styles.mainCharacterName}>{characterName}</Text>
-                        <Text style={styles.infoValue}>{goalTitle}</Text>
-                        <Text style={styles.infoValueSmall}>{deadline}</Text>
-                        <Text style={styles.infoValueSmall}>{cycle}</Text>
-
-                        <View style={styles.footer}>
-                            <PrimaryButton
-                                label="집중 시작하기"
-                                onPress={() => Alert.alert('다음 단계', '이제 메인 기능 화면으로 연결하면 돼요.')}
-                            />
-                        </View>
-                    </ScrollView>
-                )}
+                ) : null}
             </View>
         </SafeAreaView>
     );
@@ -484,5 +534,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#171717',
+    },
+    button: {
+        height: 52,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    buttonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600',
     },
 });

@@ -12,4 +12,5 @@ public class DailyTaskResponse {
     private String title;
     private boolean completed;
     private Integer currentLevel;
+
 }

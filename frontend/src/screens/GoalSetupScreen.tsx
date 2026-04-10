@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GoalSetup'>;
 
-const BASE_URL = 'http://localhost:8080';
+import { api } from '../api/client';
 
 type SetupResponse = {
     goalDefinitionId: number;
@@ -51,29 +52,24 @@ export default function GoalSetupScreen({ route, navigation }: Props) {
         try {
             setLoading(true);
 
-            const response = await fetch(`${BASE_URL}/api/onboarding/setup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId,
-                    goalTitle: goalTitle.trim(),
-                    motto: motto.trim(),
-                    startDate: startDate.trim(),
-                    endDate: endDate.trim(),
-                    alarmCycle: Number(alarmCycle),
-                    preferredEmoji: preferredEmoji.trim(),
-                    characterId: Number(characterId),
-                }),
+            const response = await api.post('/onboarding/setup', {
+                userId,
+                goalTitle: goalTitle.trim(),
+                motto: motto.trim(),
+                startDate: startDate.trim(),
+                endDate: endDate.trim(),
+                alarmCycle: Number(alarmCycle),
+                preferredEmoji: preferredEmoji.trim(),
+                characterId: Number(characterId),
             });
 
-            if (!response.ok) {
-                throw new Error('초기 설정 저장 실패');
-            }
+            const data: SetupResponse = response.data;
 
-            const data: SetupResponse = await response.json();
+            await AsyncStorage.setItem('goalPlanId', String(data.goalPlanId));
 
             Alert.alert('완료', data.message);
             navigation.replace('MainTabs', { userId });
+
         } catch (error) {
             console.error(error);
             Alert.alert('오류', '초기 설정 저장 중 문제가 발생했습니다.');

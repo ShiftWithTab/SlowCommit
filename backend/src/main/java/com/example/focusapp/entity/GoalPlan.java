@@ -12,8 +12,13 @@ public class GoalPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "goal_definition_id", nullable = false)
-    private Integer goalDefinitionId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "goal_definition_id", nullable = false)
+    private GoalDefinition goalDefinition;
 
     @Column(name = "character_id")
     private Integer characterId;
@@ -36,36 +41,49 @@ public class GoalPlan {
     @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "goal_definition_id", insertable = false, updatable = false)
-    private GoalDefinition goalDefinition;
-
-    @OneToOne
-    @JoinColumn(
-            name = "id",
-            referencedColumnName = "goal_plan_id",
-            insertable = false,
-            updatable = false
-    )
+    @OneToOne(mappedBy = "goalPlan", cascade = CascadeType.ALL)
     private GoalConfig goalConfig;
 
     public Integer getId() { return id; }
-    public Integer getGoalDefinitionId() { return goalDefinitionId; }
-    public void setGoalDefinitionId(Integer goalDefinitionId) { this.goalDefinitionId = goalDefinitionId; }
-    public Integer getCharacterId() { return characterId; }
-    public void setCharacterId(Integer characterId) { this.characterId = characterId; }
-    public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-    public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-    public Integer getCurrentLevel() { return currentLevel; }
-    public void setCurrentLevel(Integer currentLevel) { this.currentLevel = currentLevel; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+
     public GoalDefinition getGoalDefinition() {
         return goalDefinition;
     }
+    public void setGoalConfig(GoalConfig goalConfig) {
+        this.goalConfig = goalConfig;
+    }
+    public Integer getGoalDefinitionId() {
+        return goalDefinition != null ? goalDefinition.getId() : null;
+    }
+
+    public void setGoalDefinition(GoalDefinition goalDefinition) {
+        this.goalDefinition = goalDefinition;
+    }
+
+    public Integer getCharacterId() { return characterId; }
+    public void setCharacterId(Integer characterId) { this.characterId = characterId; }
+
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public Integer getCurrentLevel() { return currentLevel; }
+    public void setCurrentLevel(Integer currentLevel) { this.currentLevel = currentLevel; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
     public GoalConfig getGoalConfig() {
         return goalConfig;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

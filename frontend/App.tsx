@@ -1,7 +1,7 @@
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import RootNavigator from 'src/navigation/RootNavigator'
-import OnboardingScreen from './src/screens/OnboardingScreen';
+import RootNavigator from 'src/navigation/RootNavigator';
+
 const theme = {
   ...DarkTheme,
   colors: {
@@ -15,11 +15,10 @@ const theme = {
 };
 
 export default function App() {
-  // return (
-  //     <NavigationContainer theme={theme}>
-  //       <StatusBar style="light" />
-  //       <RootNavigator />
-  //     </NavigationContainer>
-  // );
-    return <OnboardingScreen />;
+  return (
+      <NavigationContainer theme={theme}>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </NavigationContainer>
+  );
 }

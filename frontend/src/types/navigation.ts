@@ -1,11 +1,12 @@
-export type RootStackParamList = { //초기설정
+export type RootStackParamList = {
+    Onboarding: undefined;
     Init: undefined;
     Username: { userId: number };
     GoalSetup: { userId: number };
     MainTabs: { userId: number };
 };
 
-export type MainTabParamList = { // 메인탭 으로 분리
+export type MainTabParamList = {
     Home: { userId: number };
     Stats: { userId: number };
     Profile: { userId: number };

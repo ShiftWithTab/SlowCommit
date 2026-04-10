@@ -8,16 +8,21 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
-
+public interface DailyTaskRepository extends JpaRepository<DailyTask, Integer> {
     boolean existsByGoalPlanAndTargetDate(GoalPlan goalPlan, LocalDate targetDate);
+    boolean existsByGoalPlanIdAndTargetDate(Integer goalPlanId, LocalDate targetDate);
+    long countByGoalPlan(GoalPlan goalPlan);
+    long countByGoalPlanAndCompletedTrue(GoalPlan goalPlan);
+
+    List<DailyTask> findByGoalPlanOrderByTargetDateDesc(GoalPlan goalPlan);
 
     Optional<DailyTask> findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(
             GoalPlan goalPlan,
             LocalDate today
     );
 
-    long countByGoalPlan(GoalPlan goalPlan);
-
-    long countByGoalPlanAndCompletedTrue(GoalPlan goalPlan);
+    Optional<DailyTask> findTopByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(
+            GoalPlan goalPlan,
+            LocalDate date
+    );
 }

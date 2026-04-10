@@ -32,6 +32,9 @@ public class DailyTask {
     private LocalDate targetDate;
 
     @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
     private boolean completed = false;
 
     private LocalDateTime completedAt;
