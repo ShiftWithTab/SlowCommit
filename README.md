@@ -80,31 +80,38 @@
 
 <hr>
 
-<h2>👥 역할 분담 (Full-stack Division)</h2>
+<h2>👥 역할 분담 (Feature-based Full-stack Division)</h2>
 
 <table>
   <tr>
     <th>개발자</th>
     <th>담당 도메인 & 주요 업무</th>
   </tr>
+
   <tr>
     <td><strong>@june0e (A)</strong></td>
     <td>
-      <strong>입력 시스템 & 캘린더 UI</strong><br>
-      • 목표 설정 UI 및 온보딩 흐름 구현<br>
-      • 캘린더 컴포넌트 및 화면 구조 설계<br>
+      <strong>목표 설정 & 캘린더 시스템 (로직 + UI)</strong><br>
+      • 목표 설정(Onboarding) 흐름 및 API 연동<br>
+      • 목표 생성(GoalDefinition / GoalPlan) 로직 처리<br>
+      • 온보딩 및 입력 화면(UI) 구현<br>
+      • 캘린더 컴포넌트 및 화면 UI 설계<br>
       • AsyncStorage 및 navigation 구조 관리<br>
-      • 공통 테마(Light/Dark) 및 화면 스타일 구조 설계
+      • 공통 테마(Light/Dark) 및 전체 UI 구조 관리
     </td>
   </tr>
+
   <tr>
     <td><strong>@seorivn (B)</strong></td>
     <td>
-      <strong>성장 시스템 & DailyTask 로직</strong><br>
-      • DailyTask 자동 생성 로직 구현<br>
-      • 완료 체크 및 level 계산 연결<br>
-      • Scheduler 및 stats API 구성<br>
-      • 주기 실행 관리 및 성장 피드백 처리 로직 구현
+      <strong>DailyTask & 캐릭터 성장 시스템 (로직 + UI)</strong><br>
+      • DailyTask 자동 생성 및 주기 관리 로직 구현<br>
+      • DailyTask 완료(toggle) 및 수정 기능 구현<br>
+      • 캐릭터 성장(level) 계산 및 상태 관리<br>
+      • 레벨업 조건 및 성장 피드백(메시지) 로직 구현<br>
+      • Scheduler 기반 자동 실행 처리<br>
+      • Stats API 및 데이터 집계 로직 구현<br>
+      • DailyTask / Stats / 캐릭터 관련 화면(UI) 구현
     </td>
   </tr>
 </table>
