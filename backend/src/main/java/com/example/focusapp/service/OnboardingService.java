@@ -97,15 +97,20 @@ public class OnboardingService {
 
     @Transactional
     public SetupResponse setup(SetupRequest request) {
+        System.out.println("1. setup 진입");
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+        System.out.println("2. user 조회 성공: " + user.getId());
 
         boolean hasUsername = user.getUsername() != null && !user.getUsername().trim().isEmpty();
+        System.out.println("3. hasUsername: " + hasUsername);
         if (!hasUsername) {
             throw new IllegalStateException("별명을 먼저 설정해주세요.");
         }
 
-        boolean alreadyHasGoal = goalDefinitionRepository.existsByUserId(request.getUserId());
+        boolean alreadyHasGoal = goalDefinitionRepository.existsByUserIdAndTitle(
+                request.getUserId(),request.getGoalTitle().trim());
+        System.out.println("4. alreadyHasGoal: " + alreadyHasGoal);
         if (alreadyHasGoal) {
             throw new IllegalStateException("이미 목표가 존재합니다.");
         }
@@ -114,7 +119,10 @@ public class OnboardingService {
         goalDefinition.setUserId(request.getUserId());
         goalDefinition.setTitle(request.getGoalTitle());
         goalDefinition.setMotto(request.getMotto());
+        System.out.println("5. goalDefinition save 직전");
         goalDefinition = goalDefinitionRepository.save(goalDefinition);
+        System.out.println("6. goalDefinition save 성공: " + goalDefinition.getId());
+
 
         GoalPlan goalPlan = new GoalPlan();
         goalPlan.setGoalDefinition(goalDefinition);
@@ -125,7 +133,9 @@ public class OnboardingService {
         goalPlan.setStatus("PROCEEDING");
         goalPlan.setUser(user);
 
+        System.out.println("7. goalPlan save 직전");
         goalPlan = goalPlanRepository.save(goalPlan);
+        System.out.println("8. goalPlan save 성공: " + goalPlan.getId());
 
         System.out.println(
                 "[OnboardingService] ✅ setup 저장 완료 | goalPlanId=" + goalPlan.getId()
@@ -147,9 +157,15 @@ public class OnboardingService {
         dailyTaskService.generateInitialTasks(goalPlan);
 
         return new SetupResponse(
-                goalDefinition.getId(),
                 goalPlan.getId(),
-                "초기 목표 설정이 완료되었습니다."
+                goalPlan.getUser().getId(),
+                goalPlan.getGoalDefinitionId(),
+                goalPlan.getCharacterId(),
+                goalPlan.getStartDate(),
+                goalPlan.getEndDate(),
+                goalPlan.getStatus(),
+                goalDefinition.getTitle(),
+                "목표 설정이 완료되었습니다."
         );
     }
 }

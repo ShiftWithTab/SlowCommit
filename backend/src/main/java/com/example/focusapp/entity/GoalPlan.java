@@ -51,6 +51,8 @@ public class GoalPlan {
     }
     public void setGoalConfig(GoalConfig goalConfig) {
         this.goalConfig = goalConfig;
+        if(goalConfig != null){goalConfig.setGoalPlan(this);
+        }
     }
     public Integer getGoalDefinitionId() {
         return goalDefinition != null ? goalDefinition.getId() : null;
