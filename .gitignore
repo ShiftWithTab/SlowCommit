@@ -1,4 +1,4 @@
-# [System & IDE]
+정# [System & IDE]
 .DS_Store
 .idea/
 *.iws
@@ -29,6 +29,7 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
+frontend/src/constants/config.ts
 
 # [Database]
 *.db

@@ -10,7 +10,7 @@ declare module 'axios' {
 }
 
 export const api = axios.create({
-    baseURL: `${CONFIG.BASE_URL}/api`,
+    baseURL: `${CONFIG.BASE_URL}`,
     timeout: 10000,
 });
 
