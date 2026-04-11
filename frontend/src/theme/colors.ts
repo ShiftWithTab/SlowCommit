@@ -9,5 +9,8 @@ export const colors = {
   mint: '#c8f7d2',
   lime: '#d7f7a0',
   pink: '#f7d0ef',
-  accent: '#c8f7a6'
+  accent: '#c8f7a6',
+  submit: '#4ade80',
+  delete: '#ef4444',
+  add : '#bbf7d0'
 };

@@ -4,6 +4,7 @@ import TaskSection from './TaskSection';
 import type { Task } from '../types';
 import Toast from 'react-native-toast-message';
 import LevelUpEffect from '../components/LevelUpEffect';
+import TaskInputModal from '../components/TaskInputModal';
 
 export default function DailyTaskSection({
                                              goalPlanId,
@@ -19,17 +20,16 @@ export default function DailyTaskSection({
     const [tasks, setTasks] = useState<Task[]>([]);
     const [levelUpTrigger, setLevelUpTrigger] = useState(false);
 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [editTaskItem, setEditTaskItem] = useState<Task | null>(null);
+
     useEffect(() => {
         fetchTask();
     }, [goalPlanId, refreshKey]);
 
-    /**
-     * 오늘 task 조회
-     */
     const fetchTask = async () => {
         try {
             const res = await api.get(`/daily-tasks/active/${goalPlanId}`);
-            console.log('fetchTask 응답:', res.data);
 
             const taskList = Array.isArray(res.data)
                 ? res.data
@@ -41,48 +41,80 @@ export default function DailyTaskSection({
                 onLevelChange?.(taskList[0].currentLevel);
             }
         } catch (err) {
-            console.log('조회 실패:', err);
+
         }
     };
 
-    /**
-     * 토스트
-     */
-    const handleMessage = (message?: string, type?: string) => {
-        if (!message) return;
+    const handleSubmit = async (title: string) => {
+        try {
+            if (editTaskItem) {
+                setTasks((prev) =>
+                    prev.map((t) =>
+                        t.id === editTaskItem.id ? { ...t, title } : t
+                    )
+                );
 
-        switch (type) {
-            case 'LEVEL_UP':
+                await api.patch(`/daily-tasks/${editTaskItem.id}`, { title });
+
                 Toast.show({
                     type: 'success',
-                    text1: '🎉 레벨 업!',
-                    text2: message,
+                    text1: '수정 완료',
                     position: 'bottom',
-                    visibilityTime: 2000,
                 });
-                break;
 
-            case 'NORMAL':
-                Toast.show({
-                    type: 'info',
-                    text1: message,
-                    position: 'bottom',
+            } else {
+                // ➕ 추가
+                const res = await api.post(`/daily-tasks`, {
+                    goalPlanId,
+                    title,
                 });
-                break;
 
-            case 'UNDO':
+                setTasks((prev) => [...prev, res.data]);
+
                 Toast.show({
-                    type: 'error',
-                    text1: message,
+                    type: 'success',
+                    text1: '추가 완료',
                     position: 'bottom',
                 });
-                break;
+            }
+
+        } catch (e) {
+            fetchTask();
+        } finally {
+            onLevelUp?.();
         }
     };
 
-    /**
-     * 🚀 핵심: Optimistic UI + 서버 보정
-     */
+    const handleDelete = async () => {
+        if (!editTaskItem) return;
+        const id = editTaskItem.id;
+        const prevTasks = tasks;
+        setTasks((prev) => prev.filter((t) => t.id !== id));
+
+        try {
+            await api.delete(`/daily-tasks/${id}`);
+
+            Toast.show({
+                type: 'success',
+                text1: '삭제 완료',
+                position: 'bottom',
+            });
+
+        } catch (e) {
+            setTasks(prevTasks);
+            fetchTask();
+        } finally {
+            setModalVisible(false);
+            setEditTaskItem(null);
+            onLevelUp?.();
+        }
+    };
+
+    const handleLongPress = (task: Task) => {
+        setEditTaskItem(task);
+        setModalVisible(true);
+    };
+
     const toggleTask = async (id: number) => {
         const prevTasks = tasks;
 
@@ -96,40 +128,31 @@ export default function DailyTaskSection({
 
         try {
             const res = await api.patch(`/daily-tasks/${id}/toggle`);
-            console.log('토글 응답:', res.data);
 
-            const {
-                completed,
-                currentLevel,
-                message,
-                messageType,
-            } = res.data;
+            const { completed, currentLevel, message, messageType } = res.data;
 
             setTasks((prev) =>
                 prev.map((task) =>
                     task.id === id
-                        ? {
-                            ...task,
-                            completed,
-                            currentLevel,
-                        }
+                        ? { ...task, completed, currentLevel }
                         : task
                 )
             );
 
-            if (currentLevel !== undefined) {
-                onLevelChange?.(currentLevel);
-            }
+            onLevelChange?.(currentLevel);
             onLevelUp?.();
+
             if (messageType === 'LEVEL_UP') {
                 setLevelUpTrigger(true);
             }
 
-            handleMessage(message, messageType);
+            Toast.show({
+                type: 'success',
+                text1: message,
+                position: 'bottom',
+            });
 
         } catch (err) {
-            console.log('토글 실패:', err);
-
             setTasks(prevTasks);
             await fetchTask();
         }
@@ -142,6 +165,23 @@ export default function DailyTaskSection({
                 color="#bbf7d0"
                 tasks={tasks}
                 onToggle={toggleTask}
+                onAdd={() => {
+                    setEditTaskItem(null); // ⭐ 추가 모드
+                    setModalVisible(true);
+                }}
+                onLongPress={handleLongPress}
+            />
+
+            <TaskInputModal
+                visible={modalVisible}
+                onClose={() => {
+                    setModalVisible(false);
+                    setEditTaskItem(null);
+                }}
+                onSubmit={handleSubmit}
+                onDelete={editTaskItem ? handleDelete : undefined}
+                initialValue={editTaskItem?.title}
+                title={editTaskItem ? '목표 수정' : '새로운 목표'}
             />
 
             <LevelUpEffect trigger={levelUpTrigger} />

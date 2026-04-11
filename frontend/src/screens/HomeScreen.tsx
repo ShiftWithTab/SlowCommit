@@ -61,12 +61,8 @@ export default function HomeScreen({ route }: Props) {
             const res = await api.get(
                 `/characters/current?userId=${userId}`
             );
-
-            console.log('character', res.data);
-
             setCharacterImageUrl(res.data.imageUrl);
         } catch (e) {
-            console.log('character fetch 실패', e);
         }
     };
 

@@ -46,7 +46,6 @@ export default function StatsScreen() {
       const res = await api.get(`/stats/${userId}`);
       setStats(res.data);
     } catch (err) {
-      console.log('stats 조회 실패:', err);
     }
   };
 
@@ -56,16 +55,11 @@ export default function StatsScreen() {
       if (!userId) return;
 
       const res = await api.get(`/characters/current?userId=${userId}`);
-      console.log('character:', res.data);
-
       const path = res.data.imageUrl;
-
-      const fullUrl =
-          path?.startsWith('http') ? path : `${CONFIG.IMAGE_BASE_URL}${path}`;
+      const fullUrl = path?.startsWith('http') ? path : `${CONFIG.IMAGE_BASE_URL}${path}`;
 
       setCharacterImageUrl(fullUrl);
     } catch (err) {
-      console.log('character fetch 실패:', err);
     }
   };
 

@@ -1,6 +1,8 @@
 package com.example.focusapp.controller;
 
 import com.example.focusapp.dto.DailyTaskResponse;
+import com.example.focusapp.dto.CreateDailyTaskRequest;
+import com.example.focusapp.dto.UpdateDailyTaskRequest;
 import com.example.focusapp.entity.DailyTask;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.repository.GoalPlanRepository;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -22,30 +25,52 @@ public class DailyTaskController {
     private final GoalPlanRepository goalPlanRepository;
 
     @GetMapping("/active/{goalPlanId}")
-    public DailyTaskResponse getActiveTask(@PathVariable Integer goalPlanId) {
-        System.out.println("goalPlanId = " + goalPlanId);
-
-        boolean exists = goalPlanRepository.existsById(goalPlanId);
-        System.out.println("exists = " + exists);
+    public List<DailyTaskResponse> getTodayTasks(@PathVariable Integer goalPlanId) {
 
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
-                .orElseThrow(() -> new NotFoundException("GoalPlan 없음: " + goalPlanId));
+                .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
-        System.out.println("found = " + goalPlan.getId());
+        List<DailyTask> tasks =
+                dailyTaskService.getTodayTasks(goalPlan, LocalDate.now());
 
-        DailyTask dailyTask = dailyTaskService.getActiveTask(goalPlan, LocalDate.now());
-
-        return new DailyTaskResponse(
-                dailyTask.getId(),
-                dailyTask.getGoalPlan().getId(),
-                dailyTask.getTitle(),
-                dailyTask.isCompleted(),
-                goalPlan.getCurrentLevel()
-        );
+        return tasks.stream()
+                .map(task -> new DailyTaskResponse(
+                        task.getId(),
+                        goalPlan.getId(),
+                        task.getTitle(),
+                        task.isCompleted(),
+                        goalPlan.getCurrentLevel()
+                ))
+                .toList();
     }
 
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Integer id) {
         return ResponseEntity.ok(dailyTaskService.toggle(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<DailyTaskResponse> create(
+            @RequestBody CreateDailyTaskRequest req
+    ) {
+        return ResponseEntity.ok(
+                dailyTaskService.create(req)
+        );
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<DailyTaskResponse> updateTitle(
+            @PathVariable Integer id,
+            @RequestBody UpdateDailyTaskRequest req
+    ) {
+        return ResponseEntity.ok(
+                dailyTaskService.updateTitle(id, req.getTitle())
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        dailyTaskService.delete(id);
+        return ResponseEntity.ok().build();
     }
 }

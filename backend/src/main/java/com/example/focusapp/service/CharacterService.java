@@ -33,8 +33,10 @@ public class CharacterService {
         int level = goalPlan.getCurrentLevel();
         Integer characterId = goalPlan.getCharacterId();
 
+        int imageLevel = convertLevelToImageLevel(level);
+
         CharacterImage image = characterImageRepository
-                .findByCharacterIdAndLevel(characterId, level)
+                .findByCharacterIdAndLevel(characterId, imageLevel)
                 .orElseThrow(() -> new NotFoundException("캐릭터 이미지 없음"));
 
         return new CharacterResponse(
@@ -42,5 +44,13 @@ public class CharacterService {
                 image.getImageUrl(),
                 level
         );
+    }
+
+    private int convertLevelToImageLevel(int level) {
+
+        if (level <= 3) return 1;
+        if (level <= 6) return 2;
+        if (level <= 8) return 3;
+        return 4;
     }
 }

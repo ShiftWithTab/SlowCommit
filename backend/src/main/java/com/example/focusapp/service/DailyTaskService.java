@@ -2,6 +2,8 @@ package com.example.focusapp.service;
 
 import com.example.focusapp.dto.DailyTaskResponse;
 import com.example.focusapp.dto.MessageType;
+import com.example.focusapp.dto.CreateDailyTaskRequest;
+import com.example.focusapp.dto.UpdateDailyTaskRequest;
 import com.example.focusapp.entity.DailyTask;
 import com.example.focusapp.entity.GoalConfig;
 import com.example.focusapp.entity.GoalPlan;
@@ -220,5 +222,64 @@ public class DailyTaskService {
         int idx = ThreadLocalRandom.current().nextInt(messages.length);
 
         return new MessageResult(messages[idx], MessageType.NORMAL);
+    }
+
+    @Transactional
+    public DailyTaskResponse create(CreateDailyTaskRequest req) {
+        GoalPlan goalPlan = goalPlanRepository.findById(req.getGoalPlanId())
+                .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
+
+        DailyTask task = new DailyTask();
+        task.setGoalPlan(goalPlan);
+        task.setTitle(req.getTitle());
+        task.setCompleted(false);
+        task.setTargetDate(LocalDate.now());
+
+        dailyTaskRepository.save(task);
+
+        recalculateLevel(goalPlan);
+
+        return new DailyTaskResponse(
+                task.getId(),
+                goalPlan.getId(),
+                task.getTitle(),
+                task.isCompleted(),
+                goalPlan.getCurrentLevel()
+        );
+    }
+    @Transactional
+    public DailyTaskResponse updateTitle(Integer id, String title) {
+        DailyTask task = dailyTaskRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Task 없음"));
+
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("제목은 비어 있을 수 없습니다");
+        }
+
+        task.setTitle(title.trim());
+
+        return new DailyTaskResponse(
+                task.getId(),
+                task.getGoalPlan().getId(),
+                task.getTitle(),
+                task.isCompleted(),
+                task.getGoalPlan().getCurrentLevel()
+        );
+    }
+
+    @Transactional
+    public void delete(Integer id) {
+        DailyTask task = dailyTaskRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Task 없음"));
+
+        GoalPlan goalPlan = task.getGoalPlan();
+
+        dailyTaskRepository.delete(task);
+        recalculateLevel(goalPlan);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyTask> getTodayTasks(GoalPlan goalPlan, LocalDate today) {
+        return dailyTaskRepository.findByGoalPlanAndTargetDate(goalPlan, today);
     }
 }
