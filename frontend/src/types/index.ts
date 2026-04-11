@@ -8,9 +8,10 @@ export type GoalCategory = {
 export type Task = {
   id: number;
   title: string;
-  categoryId: number;
   completed: boolean;
-  dueDate?: string;
+  currentLevel: number;
+  message?: string;
+  messageType?: string;
 };
 
 export type DashboardSummary = {
