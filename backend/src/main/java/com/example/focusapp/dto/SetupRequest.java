@@ -11,12 +11,16 @@ public class SetupRequest {
     private Integer alarmCycle;
     private String preferredEmoji;
     private Integer characterId;
+    private Integer goalDefinitionId;
 
     public Integer getUserId() { return userId; }
     public void setUserId(Integer userId) { this.userId = userId; }
 
     public String getGoalTitle() { return goalTitle; }
     public void setGoalTitle(String goalTitle) { this.goalTitle = goalTitle; }
+
+    public Integer getGoalDefinitionId() { return goalDefinitionId; }
+    public void setGoalDefinitionId(Integer goalDefinitionId) { this.goalDefinitionId = goalDefinitionId; }
 
     public String getMotto() { return motto; }
     public void setMotto(String motto) { this.motto = motto; }
