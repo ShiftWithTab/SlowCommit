@@ -1,14 +1,34 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import { colors } from '../theme/colors';
+import { CONFIG } from '../constants/config';
 
-export default function PixelCard({ message }: { message: string }) {
+export default function PixelCard({
+                                    message,
+                                    avatarUrl,
+                                  }: {
+  message: string;
+  avatarUrl?: string;
+}) {
   return (
-    <View style={styles.wrapper}>
-      <Text style={styles.avatar}>🧑‍💼</Text>
-      <View style={styles.bubble}>
-        <Text style={styles.message}>{message}</Text>
+      <View style={styles.wrapper}>
+        {avatarUrl ? (
+            <Image
+                source={{
+                  uri: avatarUrl.startsWith('http')
+                      ? avatarUrl
+                      : `${CONFIG.IMAGE_BASE_URL}${avatarUrl}`,
+                }}
+                style={styles.avatarImage}
+            />
+        ) : (
+            <Text style={styles.fallback}>🧑‍💼</Text>
+        )}
+
+
+        <View style={styles.bubble}>
+          <Text style={styles.message}>{message}</Text>
+        </View>
       </View>
-    </View>
   );
 }
 
@@ -39,5 +59,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#222'
-  }
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 14,
+  },
+  fallback: {
+    fontSize: 48,
+    marginRight: 14,
+  },
 });

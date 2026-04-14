@@ -12,5 +12,17 @@ public class DailyTaskResponse {
     private String title;
     private boolean completed;
     private Integer currentLevel;
+    private String message;
+    private MessageType messageType;
 
+    public DailyTaskResponse(Long id, Integer goalPlanId, String title,
+                             boolean completed, Integer currentLevel) {
+        this.id = id;
+        this.goalPlanId = goalPlanId;
+        this.title = title;
+        this.completed = completed;
+        this.currentLevel = currentLevel;
+        this.message = null;
+        this.messageType = null;
+    }
 }

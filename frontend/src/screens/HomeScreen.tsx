@@ -14,6 +14,7 @@ import { STORAGE_KEYS } from '../constants/storage';
 
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
+import { api } from '../api/client';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -22,6 +23,8 @@ export default function HomeScreen({ route }: Props) {
     const [currentLevel, setCurrentLevel] = useState<number | null>(null);
     const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [characterImageUrl, setCharacterImageUrl] = useState<string | undefined>();
 
     const loadData = async () => {
         const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
@@ -34,6 +37,8 @@ export default function HomeScreen({ route }: Props) {
         if (savedGoalPlanId) {
             setGoalPlanId(Number(savedGoalPlanId));
         }
+
+        fetchCharacter();
     };
 
     useFocusEffect(
@@ -45,7 +50,20 @@ export default function HomeScreen({ route }: Props) {
     const onRefresh = async () => {
         setRefreshing(true);
         await loadData();
+        setRefreshKey((prev) => prev + 1); // ⭐ 강제 리렌더
         setRefreshing(false);
+    };
+
+    const fetchCharacter = async () => {
+        try {
+            const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+
+            const res = await api.get(
+                `/characters/current?userId=${userId}`
+            );
+            setCharacterImageUrl(res.data.imageUrl);
+        } catch (e) {
+        }
     };
 
     return (
@@ -70,7 +88,9 @@ export default function HomeScreen({ route }: Props) {
                 ))}
             </ScrollView>
 
-            <PixelCard message={currentLevel === null ? '불러오는 중...' : `현재 성장 단계 Lv.${currentLevel} / 10`}
+            <PixelCard
+                message={currentLevel === null ? '불러오는 중...' : `현재 성장 단계 Lv.${currentLevel} / 10`}
+                avatarUrl={characterImageUrl}
             />
 
             <MonthlyCalendar />
@@ -79,6 +99,8 @@ export default function HomeScreen({ route }: Props) {
                 <DailyTaskSection
                     goalPlanId={goalPlanId}
                     onLevelChange={setCurrentLevel}
+                    refreshKey={refreshKey}
+                    onLevelUp={fetchCharacter}
                 />
             )}
         </ScrollView>

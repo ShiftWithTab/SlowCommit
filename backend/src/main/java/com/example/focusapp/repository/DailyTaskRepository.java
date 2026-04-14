@@ -15,6 +15,7 @@ public interface DailyTaskRepository extends JpaRepository<DailyTask, Integer> {
     long countByGoalPlanAndCompletedTrue(GoalPlan goalPlan);
 
     List<DailyTask> findByGoalPlanOrderByTargetDateDesc(GoalPlan goalPlan);
+    List<DailyTask> findByGoalPlanAndTargetDate(GoalPlan goalPlan, LocalDate date);
 
     Optional<DailyTask> findFirstByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(
             GoalPlan goalPlan,
