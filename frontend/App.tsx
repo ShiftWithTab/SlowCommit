@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ResultModal from './src/components/ResultModal';
 import { api } from './src/api/client';
-import { STORAGE_KEYS } from './src/constants/storage'; // ← 경로 확인
+import { STORAGE_KEYS } from './src/constants/storage';
 
 const theme = {
     ...DarkTheme,
@@ -22,36 +22,63 @@ const theme = {
 };
 
 export default function App() {
-    const [result, setResult] = useState<any>(null);
+    const [results, setResults] = useState<any[]>([]);
+    const [current, setCurrent] = useState<any | null>(null);
     const [visible, setVisible] = useState(false);
+    const [userId, setUserId] = useState<number | null>(null);
 
     useEffect(() => {
-        checkResult();
+        const init = async () => {
+            const id = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+            if (id) {
+                setUserId(Number(id));
+            }
+        };
+
+        init();
     }, []);
+
+    useEffect(() => {
+        if (userId) {
+            checkResult();
+        }
+    }, [userId]);
 
     const checkResult = async () => {
         try {
-            const goalPlanId = await AsyncStorage.getItem(STORAGE_KEYS.GOAL_PLAN_ID);
-            if (!goalPlanId) {
-                console.log("checkResult(결과 이미지 생성) : goalPlanId 없음");
-                return;
-            }
-
-            const key = `result_seen_${goalPlanId}`;
-            const seen = await AsyncStorage.getItem(key);
-            if (seen) return; // ← 이미 봤으면 여기서 종료
-
-            const res = await api.get(`/goals/${goalPlanId}/result`);
+            if (!userId) return;
+            const res = await api.get(`/goals/result/pending?userId=${userId}`);
             const data = res.data;
-            if (!data) return;
 
-            setResult(data);
+            if (!data || data.length === 0) return;
+
+            setResults(data);
+            setCurrent(data[0]);
             setVisible(true);
-            await AsyncStorage.setItem(key, "true");
 
         } catch (e) {
-            console.log("결과 없음 또는 에러", e);
+            console.log(e);
         }
+    };
+    const handleClose = async () => {
+        try {
+            if (!current) return;
+            api.patch(`/goals/${current.goalPlanId}/result/seen?userId=${userId}`);
+        } catch (e) {
+            console.log(e);
+        }
+
+        const nextResults = results.slice(1);
+
+        if (nextResults.length === 0) {
+            setVisible(false);
+            setResults([]);
+            setCurrent(null);
+            return;
+        }
+
+        setResults(nextResults);
+        setCurrent(nextResults[0]);
     };
 
     return (
@@ -60,11 +87,10 @@ export default function App() {
                 <StatusBar style="light" />
                 <RootNavigator />
             </NavigationContainer>
-
             <ResultModal
                 visible={visible}
-                result={result}
-                onClose={() => setVisible(false)}
+                result={current}
+                onClose={handleClose}
             />
             <Toast />
         </View>

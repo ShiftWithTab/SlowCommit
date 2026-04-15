@@ -55,14 +55,14 @@ public class GoalResultService {
         GoalResult result = goalResultRepository.findByGoalPlan(goalPlan)
                 .orElseThrow(() -> new RuntimeException("결과 없음"));
 
-        // ⭐ 캐릭터 정보 포함
         CharacterResponse character =
                 characterService.getCurrentCharacter(goalPlan.getUser().getId());
 
         return new GoalResultResponse(
+                result.getGoalPlan().getId(), // ⭐ 반드시 포함
                 result.getResultType(),
                 result.getMessage(),
-                result.getCreatedAt().toString(),
+                result.getCreatedAt(),
                 character.getImageUrl(),
                 character.getLevel()
         );
@@ -116,5 +116,37 @@ public class GoalResultService {
 
     private String getRandomMessage(List<String> messages) {
         return messages.get(random.nextInt(messages.size()));
+    }
+
+    // 미확인 결과 목록 조회
+    @Transactional(readOnly = true)
+    public List<GoalResultResponse> getPendingResults(Long userId) {
+
+        List<GoalResult> results = goalResultRepository
+                .findByGoalPlan_User_IdAndIsSeenFalseOrderByCreatedAtAsc(userId.intValue());
+
+        // ⭐ 한 번만 호출
+        CharacterResponse character = characterService.getCurrentCharacter(userId.intValue());
+
+        return results.stream()
+                .map(result -> new GoalResultResponse(
+                        result.getGoalPlan().getId(),
+                        result.getResultType(),
+                        result.getMessage(),
+                        result.getCreatedAt(),
+                        character.getImageUrl(),
+                        character.getLevel()
+                )).toList();
+    }
+
+    // 확인 처리
+    @Transactional
+    public void markAsSeen(Integer goalPlanId, Integer userId) {
+
+        GoalResult result = goalResultRepository
+                .findByGoalPlan_IdAndGoalPlan_User_Id(goalPlanId, userId)
+                .orElseThrow(() -> new RuntimeException("결과 없음"));
+
+        result.markAsSeen();
     }
 }

@@ -20,6 +20,7 @@
     "expo-asset": "~11.1.7",
     "expo-haptics": "^55.0.14",
     "expo-linear-gradient": "~14.1.5",
+    "expo-media-library": "~17.1.7",
     "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
     "html2canvas": "^1.4.1",

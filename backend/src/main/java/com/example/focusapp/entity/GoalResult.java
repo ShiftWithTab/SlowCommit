@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Getter
@@ -33,12 +34,21 @@ public class GoalResult {
     private String message;
 
     @Column(nullable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private boolean isSeen = false;
 
     public GoalResult(GoalPlan goalPlan, ResultType resultType, String message) {
         this.goalPlan = goalPlan;
         this.resultType = resultType;
         this.message = message;
         this.createdAt = LocalDateTime.now();
+        this.isSeen = false;
+    }
+
+    public void markAsSeen() {
+        this.isSeen = true;
     }
 }

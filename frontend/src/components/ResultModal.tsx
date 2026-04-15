@@ -12,8 +12,9 @@ const ResultModal = ({ visible, onClose, result }: any) => {
                             type={result.resultType}
                             message={result.message}
                             level={result.level}
-                            character={result.characterImageUrl}
-                            onClose={onClose}  // ✅ 추가
+                            character={result.imageUrl}
+                            onClose={onClose}
+                            goalTitle={result.goalTitle}
                         />
                     </View>
                 )}
