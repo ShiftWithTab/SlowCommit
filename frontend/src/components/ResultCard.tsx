@@ -13,7 +13,7 @@ import * as MediaLibrary from "expo-media-library";
 import { Ionicons } from "@expo/vector-icons";
 import { CONFIG } from "../constants/config";
 
-const ResultCard = ({ type, message, level, character, onClose }: any) => {
+const ResultCard = ({ type, message, level, character, goalTitle, onClose }: any) => {
     const ref = useRef<ViewShot | null>(null);
 
     const [loading, setLoading] = useState(false);
@@ -148,6 +148,29 @@ const ResultCard = ({ type, message, level, character, onClose }: any) => {
                                 backgroundColor: "rgba(255,255,255,0.15)",
                                 alignItems: "center"
                             }}>
+                                {goalTitle && (
+                                    <View style={{
+                                        marginBottom: 12,
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 6,
+                                        borderRadius: 12,
+                                        backgroundColor: "rgba(255,255,255,0.1)"
+                                    }}>
+                                        <Text style={{
+                                            color: "rgba(255,255,255,0.8)",
+                                            fontSize: 14,
+                                            textAlign: "center"
+                                        }}>
+                                            🎯 {goalTitle}
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* LEVEL */}
+                                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, letterSpacing: 2 }} >
+                                    LEVEL
+                                </Text>
+
                                 <Text style={{ color: "#fff", fontSize: 42 }}>
                                     {level}
                                 </Text>

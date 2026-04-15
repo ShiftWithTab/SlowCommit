@@ -64,7 +64,8 @@ public class GoalResultService {
                 result.getMessage(),
                 result.getCreatedAt(),
                 character.getImageUrl(),
-                character.getLevel()
+                character.getLevel(),
+                goalPlan.getGoalDefinition().getTitle()
         );
     }
 
@@ -122,8 +123,8 @@ public class GoalResultService {
     @Transactional(readOnly = true)
     public List<GoalResultResponse> getPendingResults(Long userId) {
 
-        List<GoalResult> results = goalResultRepository
-                .findByGoalPlan_User_IdAndIsSeenFalseOrderByCreatedAtAsc(userId.intValue());
+        List<GoalResult> results =
+                goalResultRepository.findPendingResultsWithGoal(userId.intValue());
 
         // ⭐ 한 번만 호출
         CharacterResponse character = characterService.getCurrentCharacter(userId.intValue());
@@ -135,7 +136,10 @@ public class GoalResultService {
                         result.getMessage(),
                         result.getCreatedAt(),
                         character.getImageUrl(),
-                        character.getLevel()
+                        character.getLevel(),
+                        result.getGoalPlan()
+                                .getGoalDefinition()
+                                .getTitle()
                 )).toList();
     }
 

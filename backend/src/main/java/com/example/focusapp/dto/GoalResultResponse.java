@@ -20,4 +20,5 @@ public class GoalResultResponse {
 
     private String imageUrl;
     private int level;
+    private String goalTitle;
 }

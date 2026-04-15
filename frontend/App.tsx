@@ -87,6 +87,7 @@ export default function App() {
                 <StatusBar style="light" />
                 <RootNavigator />
             </NavigationContainer>
+
             <ResultModal
                 visible={visible}
                 result={current}
