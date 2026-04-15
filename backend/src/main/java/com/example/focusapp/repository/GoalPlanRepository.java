@@ -16,4 +16,5 @@ public interface GoalPlanRepository extends JpaRepository<GoalPlan, Integer> {
     Optional<GoalPlan> findByUserId(Integer userId);
     Optional<GoalPlan> findTopByUserIdOrderByCreatedAtDesc(Long userId);
     Optional<GoalPlan> findActiveByUserId(Integer userId);
+    List<GoalPlan> findByEndDate(LocalDate endDate);
 }
