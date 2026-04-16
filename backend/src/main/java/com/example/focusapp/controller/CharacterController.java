@@ -16,7 +16,7 @@ public class CharacterController {
 
     @GetMapping("/current")
     public ResponseEntity<CharacterResponse> getCurrentCharacter(
-            @RequestParam Integer userId
+            @RequestParam Long userId
     ) {
         return ResponseEntity.ok(
                 characterService.getCurrentCharacter(userId)

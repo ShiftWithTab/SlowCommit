@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface CharacterImageRepository
         extends JpaRepository<CharacterImage, Long> {
 
-    Optional<CharacterImage> findByCharacterIdAndLevel(Integer characterId, Integer level);
+    Optional<CharacterImage> findByCharacterIdAndLevel(Long characterId, Integer level);
 }

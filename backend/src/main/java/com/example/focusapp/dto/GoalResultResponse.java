@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class GoalResultResponse {
 
-    private Integer goalPlanId;
+    private Long goalPlanId;
     private ResultType resultType;
     private String message;
 

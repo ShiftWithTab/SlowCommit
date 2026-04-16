@@ -2,17 +2,17 @@ package com.example.focusapp.dto;
 
 public class SaveUsernameResponse {
 
-    private Integer userId;
+    private Long userId;
     private String username;
     private String message;
 
-    public SaveUsernameResponse(Integer userId, String username, String message) {
+    public SaveUsernameResponse(Long userId, String username, String message) {
         this.userId = userId;
         this.username = username;
         this.message = message;
     }
 
-    public Integer getUserId() {
+    public Long getUserId() {
         return userId;
     }
 

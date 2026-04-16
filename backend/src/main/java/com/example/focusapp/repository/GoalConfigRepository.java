@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface GoalConfigRepository extends JpaRepository<GoalConfig, Integer> {
+public interface GoalConfigRepository extends JpaRepository<GoalConfig, Long> {
     Optional<GoalConfig> findByGoalPlan(GoalPlan goalPlan);
 }

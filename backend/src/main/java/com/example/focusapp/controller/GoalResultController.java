@@ -26,7 +26,7 @@ public class GoalResultController {
      * ✔ 결과가 없으면 Lazy 생성
      */
     @GetMapping("/{goalPlanId}/result")
-    public GoalResultResponse getResult(@PathVariable Integer goalPlanId) {
+    public GoalResultResponse getResult(@PathVariable Long goalPlanId) {
 
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
@@ -44,15 +44,15 @@ public class GoalResultController {
 
     @PatchMapping("/{goalPlanId}/result/seen")
     public void markAsSeen(
-            @PathVariable Integer goalPlanId,
-            @RequestParam Integer userId
+            @PathVariable Long goalPlanId,
+            @RequestParam Long userId
             // @AuthenticationPrincipal User user // Security 사용 하면 써야함.
     ) {
         goalResultService.markAsSeen(goalPlanId, userId);
     }
 
     @PostMapping("/test/result/{goalPlanId}")
-    public GoalResultResponse forceCreateResult(@PathVariable Integer goalPlanId) {
+    public GoalResultResponse forceCreateResult(@PathVariable Long goalPlanId) {
 
         GoalPlan plan = goalPlanRepository.findById(goalPlanId)
                 .orElseThrow(() -> new RuntimeException("GoalPlan 없음"));

@@ -8,14 +8,14 @@ import lombok.Getter;
 public class DailyTaskResponse {
 
     private Long id;
-    private Integer goalPlanId;
+    private Long goalPlanId;
     private String title;
     private boolean completed;
     private Integer currentLevel;
     private String message;
     private MessageType messageType;
 
-    public DailyTaskResponse(Long id, Integer goalPlanId, String title,
+    public DailyTaskResponse(Long id, Long goalPlanId, String title,
                              boolean completed, Integer currentLevel) {
         this.id = id;
         this.goalPlanId = goalPlanId;

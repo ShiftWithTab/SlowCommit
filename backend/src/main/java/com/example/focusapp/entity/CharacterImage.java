@@ -14,7 +14,7 @@ public class CharacterImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer characterId;
+    private Long characterId;
     private Integer level;
     private String imageUrl;
 }

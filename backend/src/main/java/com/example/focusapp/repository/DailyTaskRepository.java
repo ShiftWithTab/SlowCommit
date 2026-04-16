@@ -8,9 +8,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface DailyTaskRepository extends JpaRepository<DailyTask, Integer> {
+public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
     boolean existsByGoalPlanAndTargetDate(GoalPlan goalPlan, LocalDate targetDate);
-    boolean existsByGoalPlanIdAndTargetDate(Integer goalPlanId, LocalDate targetDate);
+    boolean existsByGoalPlanIdAndTargetDate(Long goalPlanId, LocalDate targetDate);
     long countByGoalPlan(GoalPlan goalPlan);
     long countByGoalPlanAndCompletedTrue(GoalPlan goalPlan);
 
