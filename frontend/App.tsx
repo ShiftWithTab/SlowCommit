@@ -2,7 +2,12 @@ import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import RootNavigator from 'src/navigation/RootNavigator';
 import Toast from 'react-native-toast-message';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ResultModal from './src/components/ResultModal';
+import { api } from './src/api/client';
+import { STORAGE_KEYS } from './src/constants/storage';
 
 const theme = {
     ...DarkTheme,
@@ -16,39 +21,66 @@ const theme = {
     },
 };
 
-const toastConfig = {
-    success: ({ text1, text2 }: any) => (
-        <View style={{ width: '90%', backgroundColor: '#1a1a1a', borderRadius: 16, padding: 16, borderLeftWidth: 4, borderLeftColor: '#c8f7a6' }}>
-            <Text style={{ color: '#c8f7a6', fontWeight: 'bold', fontSize: 14 }}>
-                {typeof text1 === 'string' ? text1 : ''}
-            </Text>
-
-            {typeof text2 === 'string' && (
-                <Text style={{ color: '#f5f5f5', marginTop: 4 }}>
-                    {text2}
-                </Text>
-            )}
-        </View>
-    ),
-
-    error: ({ text1 }: any) => (
-        <View style={{ width: '90%', backgroundColor: '#1a1a1a', borderRadius: 16, padding: 16, borderLeftWidth: 4, borderLeftColor: '#ff6b6b' }}>
-            <Text style={{ color: '#ff6b6b' }}>
-                {typeof text1 === 'string' ? text1 : ''}
-            </Text>
-        </View>
-    ),
-
-    info: ({ text1 }: any) => (
-        <View style={{ width: '90%', backgroundColor: '#1a1a1a', borderRadius: 16, padding: 16, borderLeftWidth: 4, borderLeftColor: '#888' }}>
-            <Text style={{ color: '#f5f5f5' }}>
-                {typeof text1 === 'string' ? text1 : ''}
-            </Text>
-        </View>
-    ),
-};
-
 export default function App() {
+    const [results, setResults] = useState<any[]>([]);
+    const [current, setCurrent] = useState<any | null>(null);
+    const [visible, setVisible] = useState(false);
+    const [userId, setUserId] = useState<number | null>(null);
+
+    useEffect(() => {
+        const init = async () => {
+            const id = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
+            if (id) {
+                setUserId(Number(id));
+            }
+        };
+
+        init();
+    }, []);
+
+    useEffect(() => {
+        if (userId) {
+            checkResult();
+        }
+    }, [userId]);
+
+    const checkResult = async () => {
+        try {
+            if (!userId) return;
+            const res = await api.get(`/goals/result/pending?userId=${userId}`);
+            const data = res.data;
+
+            if (!data || data.length === 0) return;
+
+            setResults(data);
+            setCurrent(data[0]);
+            setVisible(true);
+
+        } catch (e) {
+            console.log(e);
+        }
+    };
+    const handleClose = async () => {
+        try {
+            if (!current) return;
+            api.patch(`/goals/${current.goalPlanId}/result/seen?userId=${userId}`);
+        } catch (e) {
+            console.log(e);
+        }
+
+        const nextResults = results.slice(1);
+
+        if (nextResults.length === 0) {
+            setVisible(false);
+            setResults([]);
+            setCurrent(null);
+            return;
+        }
+
+        setResults(nextResults);
+        setCurrent(nextResults[0]);
+    };
+
     return (
         <View style={{ flex: 1 }}>
             <NavigationContainer theme={theme}>
@@ -56,7 +88,12 @@ export default function App() {
                 <RootNavigator />
             </NavigationContainer>
 
-            <Toast config={toastConfig} />
+            <ResultModal
+                visible={visible}
+                result={current}
+                onClose={handleClose}
+            />
+            <Toast />
         </View>
     );
 }

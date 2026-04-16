@@ -29,16 +29,15 @@ export default function HomeScreen({ route }: Props) {
     const loadData = async () => {
         const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
         const savedGoalPlanId = await AsyncStorage.getItem(STORAGE_KEYS.GOAL_PLAN_ID);
+        const savedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
 
-        if (savedUsername) {
-            setUsername(savedUsername);
+        if (savedUsername) setUsername(savedUsername);
+        if (savedGoalPlanId) setGoalPlanId(Number(savedGoalPlanId));
+
+        if (savedUserId) {
+            const uid = Number(savedUserId);
+            await fetchCharacter(uid);
         }
-
-        if (savedGoalPlanId) {
-            setGoalPlanId(Number(savedGoalPlanId));
-        }
-
-        fetchCharacter();
     };
 
     useFocusEffect(
@@ -54,15 +53,16 @@ export default function HomeScreen({ route }: Props) {
         setRefreshing(false);
     };
 
-    const fetchCharacter = async () => {
+    const fetchCharacter = async (uid: number) => {
         try {
-            const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
-
             const res = await api.get(
-                `/characters/current?userId=${userId}`
+                `/characters/current?userId=${uid}`
             );
+
             setCharacterImageUrl(res.data.imageUrl);
+            setCurrentLevel(res.data.level);
         } catch (e) {
+            console.log(e);
         }
     };
 
