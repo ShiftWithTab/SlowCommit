@@ -14,7 +14,7 @@
 <h2>📅 프로젝트 개요</h2>
 
 <ul>
-  <li><strong>개발 기간</strong>: 2026.04.01 ~ 2026.04.11 (11일 집중 스프린트)</li>
+  <li><strong>개발 기간</strong>: 2026.04.01 ~ 2026.04.26</li>
   <li><strong>핵심 컨셉</strong>: 캐릭터 성장 + 주기적 체크리스트 + 미니멀 루틴 UI</li>
   <li><strong>개발 인원</strong>: 2인 (Full-stack 협업 프로젝트)</li>
 </ul>
@@ -155,15 +155,3 @@
 </ul>
 
 <hr>
-
-<h2>📌 현재 구현 완료 상태</h2>
-
-<ul>
-  <li>✅ GoalPlan 생성</li>
-  <li>✅ GoalConfig 저장</li>
-  <li>✅ DailyTask 자동 생성</li>
-  <li>✅ DailyTask toggle</li>
-  <li>✅ currentLevel 반영</li>
-  <li>✅ Stats 조회</li>
-  <li>⏳ Push 알림 예정</li>
-</ul>
