@@ -12,6 +12,7 @@ import com.example.focusapp.repository.DailyTaskRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.repository.GoalConfigRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +36,13 @@ public class DailyTaskService {
     /**
      * 온보딩 직후 전체 기간 task 생성
      */
+    @Async
     @Transactional
-    public void generateInitialTasks(GoalPlan goalPlan) {
-        System.out.println("🔥 generateInitialTasks 시작 goalPlanId=" + goalPlan.getId());
+    public void generateInitialTasks(Long goalPlanId) {
+        System.out.println("🔥 generateInitialTasks 시작 goalPlanId=" + goalPlanId);
+
+        GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
+                .orElseThrow(() -> new RuntimeException("GoalPlan 없음"));
 
         GoalConfig config = goalConfigRepository.findByGoalPlan(goalPlan)
                 .orElseThrow(() -> new RuntimeException("GoalConfig 없음"));
@@ -74,7 +79,7 @@ public class DailyTaskService {
      * 완료 토글
      */
     @Transactional
-    public DailyTaskResponse toggle(Integer id) {
+    public DailyTaskResponse toggle(Long id) {
         DailyTask dailyTask = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("DailyTask 없음"));
 
@@ -107,7 +112,7 @@ public class DailyTaskService {
                 dailyTask.isCompleted(),
                 afterLevel,
                 result.getMessage(),
-                result.getType() // ⭐ 추가
+                result.getType()
         );
     }
 
@@ -248,7 +253,7 @@ public class DailyTaskService {
         );
     }
     @Transactional
-    public DailyTaskResponse updateTitle(Integer id, String title) {
+    public DailyTaskResponse updateTitle(Long id, String title) {
         DailyTask task = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task 없음"));
 
@@ -268,7 +273,7 @@ public class DailyTaskService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Long id) {
         DailyTask task = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task 없음"));
 

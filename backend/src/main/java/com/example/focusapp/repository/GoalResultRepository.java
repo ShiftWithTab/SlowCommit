@@ -13,8 +13,8 @@ public interface GoalResultRepository extends JpaRepository<GoalResult, Long> {
 
     boolean existsByGoalPlan(GoalPlan goalPlan);
     Optional<GoalResult> findByGoalPlan(GoalPlan goalPlan);
-    List<GoalResult> findByGoalPlan_User_IdAndIsSeenFalseOrderByCreatedAtAsc(Integer userId);
-    Optional<GoalResult> findByGoalPlan_IdAndGoalPlan_User_Id(Integer goalPlanId, Integer userId);
+    List<GoalResult> findByGoalPlan_User_IdAndIsSeenFalseOrderByCreatedAtAsc(Long userId);
+    Optional<GoalResult> findByGoalPlan_IdAndGoalPlan_User_Id(Long goalPlanId, Long userId);
 
     @Query("""
     select r from GoalResult r
@@ -23,5 +23,5 @@ public interface GoalResultRepository extends JpaRepository<GoalResult, Long> {
     where gp.user.id = :userId
     order by r.createdAt asc
     """)
-    List<GoalResult> findPendingResultsWithGoal(@Param("userId") Integer userId);
+    List<GoalResult> findPendingResultsWithGoal(@Param("userId") Long userId);
 }

@@ -23,7 +23,7 @@ public class OnboardingController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<OnboardingStatusResponse> getStatus(@RequestParam Integer userId) {
+    public ResponseEntity<OnboardingStatusResponse> getStatus(@RequestParam Long userId) {
         return ResponseEntity.ok(onboardingService.getStatus(userId));
     }
 

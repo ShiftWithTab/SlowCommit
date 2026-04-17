@@ -22,7 +22,7 @@ public class CharacterService {
     private final CharacterImageRepository characterImageRepository;
 
     @Transactional(readOnly = true)
-    public CharacterResponse getCurrentCharacter(Integer userId) {
+    public CharacterResponse getCurrentCharacter(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User 없음"));
@@ -31,7 +31,7 @@ public class CharacterService {
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
         int level = goalPlan.getCurrentLevel();
-        Integer characterId = goalPlan.getCharacterId();
+        Long characterId = goalPlan.getCharacterId();
 
         int imageLevel = convertLevelToImageLevel(level);
 

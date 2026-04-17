@@ -37,7 +37,7 @@ public class OnboardingService {
     }
 
     @Transactional(readOnly = true)
-    public OnboardingStatusResponse getStatus(Integer userId) {
+    public OnboardingStatusResponse getStatus(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
 
@@ -154,7 +154,7 @@ public class OnboardingService {
 
         goalConfigRepository.saveAndFlush(goalConfig);
 
-        dailyTaskService.generateInitialTasks(goalPlan);
+        dailyTaskService.generateInitialTasks(goalPlan.getId());
 
         return new SetupResponse(
                 goalPlan.getId(),

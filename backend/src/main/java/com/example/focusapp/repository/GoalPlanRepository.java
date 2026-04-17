@@ -6,15 +6,15 @@ import java.util.Optional;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface GoalPlanRepository extends JpaRepository<GoalPlan, Integer> {
+public interface GoalPlanRepository extends JpaRepository<GoalPlan, Long> {
 
     List<GoalPlan> findByStartDateLessThanEqualAndEndDateGreaterThanEqual(
             LocalDate today1,
             LocalDate today2
     );
-    Optional<GoalPlan> findTopByUserIdOrderByIdDesc(Integer userId);
-    Optional<GoalPlan> findByUserId(Integer userId);
+    Optional<GoalPlan> findTopByUserIdOrderByIdDesc(Long userId);
+    Optional<GoalPlan> findByUserId(Long userId);
     Optional<GoalPlan> findTopByUserIdOrderByCreatedAtDesc(Long userId);
-    Optional<GoalPlan> findActiveByUserId(Integer userId);
+    Optional<GoalPlan> findActiveByUserId(Long userId);
     List<GoalPlan> findByEndDate(LocalDate endDate);
 }

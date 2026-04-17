@@ -59,7 +59,7 @@ public class GoalResultService {
                 characterService.getCurrentCharacter(goalPlan.getUser().getId());
 
         return new GoalResultResponse(
-                result.getGoalPlan().getId(), // ⭐ 반드시 포함
+                result.getGoalPlan().getId(),
                 result.getResultType(),
                 result.getMessage(),
                 result.getCreatedAt(),
@@ -124,10 +124,10 @@ public class GoalResultService {
     public List<GoalResultResponse> getPendingResults(Long userId) {
 
         List<GoalResult> results =
-                goalResultRepository.findPendingResultsWithGoal(userId.intValue());
+                goalResultRepository.findPendingResultsWithGoal(userId);
 
         // ⭐ 한 번만 호출
-        CharacterResponse character = characterService.getCurrentCharacter(userId.intValue());
+        CharacterResponse character = characterService.getCurrentCharacter(userId);
 
         return results.stream()
                 .map(result -> new GoalResultResponse(
@@ -145,7 +145,7 @@ public class GoalResultService {
 
     // 확인 처리
     @Transactional
-    public void markAsSeen(Integer goalPlanId, Integer userId) {
+    public void markAsSeen(Long goalPlanId, Long userId) {
 
         GoalResult result = goalResultRepository
                 .findByGoalPlan_IdAndGoalPlan_User_Id(goalPlanId, userId)

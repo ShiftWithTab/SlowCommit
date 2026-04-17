@@ -19,7 +19,7 @@ public class StatsService {
     private final DailyTaskRepository dailyTaskRepository;
 
     public StatsResponse getStats(Long userId) {
-        GoalPlan goalPlan = goalPlanRepository.findByUserId(userId.intValue())
+        GoalPlan goalPlan = goalPlanRepository.findByUserId(userId)
                 .orElseThrow();
 
         long completed = dailyTaskRepository.countByGoalPlanAndCompletedTrue(goalPlan);

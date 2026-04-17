@@ -25,7 +25,7 @@ public class DailyTaskController {
     private final GoalPlanRepository goalPlanRepository;
 
     @GetMapping("/active/{goalPlanId}")
-    public List<DailyTaskResponse> getTodayTasks(@PathVariable Integer goalPlanId) {
+    public List<DailyTaskResponse> getTodayTasks(@PathVariable Long goalPlanId) {
 
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
@@ -45,7 +45,7 @@ public class DailyTaskController {
     }
 
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Integer id) {
+    public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Long id) {
         return ResponseEntity.ok(dailyTaskService.toggle(id));
     }
 
@@ -60,7 +60,7 @@ public class DailyTaskController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<DailyTaskResponse> updateTitle(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestBody UpdateDailyTaskRequest req
     ) {
         return ResponseEntity.ok(
@@ -69,7 +69,7 @@ public class DailyTaskController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         dailyTaskService.delete(id);
         return ResponseEntity.ok().build();
     }

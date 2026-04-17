@@ -11,10 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "daily_tasks",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"goal_plan_id", "target_date"})
-)
+@Table(name = "daily_tasks")
 @Getter
 @Setter
 @NoArgsConstructor

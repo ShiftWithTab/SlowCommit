@@ -3,10 +3,10 @@ package com.example.focusapp.dto;
 import java.time.LocalDate;
 
 public class SetupResponse {
-    private Integer goalPlanId;
-    private Integer userId;
-    private Integer goalDefinitionId;
-    private Integer characterId;
+    private Long goalPlanId;
+    private Long userId;
+    private Long goalDefinitionId;
+    private Long characterId;
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;
@@ -14,8 +14,8 @@ public class SetupResponse {
     private String title;
 
 
-    public SetupResponse(Integer goalPlanId, Integer userId, Integer goalDefinitionId,
-                         Integer characterId, LocalDate startDate, LocalDate endDate,
+    public SetupResponse(Long goalPlanId, Long userId, Long goalDefinitionId,
+                         Long characterId, LocalDate startDate, LocalDate endDate,
                          String status, String title, String message) {
         this.goalPlanId = goalPlanId;
         this.userId = userId;
@@ -28,19 +28,19 @@ public class SetupResponse {
         this.message = message;
     }
 
-    public Integer getGoalPlanId() {
+    public Long getGoalPlanId() {
         return goalPlanId;
     }
 
-    public Integer getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public Integer getGoalDefinitionId() {
+    public Long getGoalDefinitionId() {
         return goalDefinitionId;
     }
 
-    public Integer getCharacterId() {
+    public Long getCharacterId() {
         return characterId;
     }
 

@@ -3,24 +3,24 @@ package com.example.focusapp.dto;
 import java.time.LocalDate;
 
 public class SetupRequest {
-    private Integer userId;
+    private Long userId;
     private String goalTitle;
     private String motto;
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer alarmCycle;
     private String preferredEmoji;
-    private Integer characterId;
-    private Integer goalDefinitionId;
+    private Long characterId;
+    private Long goalDefinitionId;
 
-    public Integer getUserId() { return userId; }
-    public void setUserId(Integer userId) { this.userId = userId; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public String getGoalTitle() { return goalTitle; }
     public void setGoalTitle(String goalTitle) { this.goalTitle = goalTitle; }
 
-    public Integer getGoalDefinitionId() { return goalDefinitionId; }
-    public void setGoalDefinitionId(Integer goalDefinitionId) { this.goalDefinitionId = goalDefinitionId; }
+    public Long getGoalDefinitionId() { return goalDefinitionId; }
+    public void setGoalDefinitionId(Long goalDefinitionId) { this.goalDefinitionId = goalDefinitionId; }
 
     public String getMotto() { return motto; }
     public void setMotto(String motto) { this.motto = motto; }
@@ -37,6 +37,6 @@ public class SetupRequest {
     public String getPreferredEmoji() { return preferredEmoji; }
     public void setPreferredEmoji(String preferredEmoji) { this.preferredEmoji = preferredEmoji; }
 
-    public Integer getCharacterId() { return characterId; }
-    public void setCharacterId(Integer characterId) { this.characterId = characterId; }
+    public Long getCharacterId() { return characterId; }
+    public void setCharacterId(Long characterId) { this.characterId = characterId; }
 }

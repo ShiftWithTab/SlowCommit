@@ -6,6 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateDailyTaskRequest {
-    private Integer goalPlanId;
+    private Long goalPlanId;
     private String title;
 }
