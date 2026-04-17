@@ -5,9 +5,12 @@ import com.example.focusapp.entity.GoalConfig;
 import com.example.focusapp.entity.GoalDefinition;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.entity.User;
+import com.example.focusapp.entity.Character;
+import com.example.focusapp.entity.GoalStatus;
 import com.example.focusapp.repository.GoalConfigRepository;
 import com.example.focusapp.repository.GoalDefinitionRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
+import com.example.focusapp.repository.CharacterRepository;
 import com.example.focusapp.repository.UserRepository;
 import com.example.focusapp.service.DailyTaskService;
 import org.springframework.stereotype.Service;
@@ -21,19 +24,22 @@ public class OnboardingService {
     private final GoalPlanRepository goalPlanRepository;
     private final GoalConfigRepository goalConfigRepository;
     private final DailyTaskService dailyTaskService;
+    private final CharacterRepository characterRepository;
 
     public OnboardingService(
             UserRepository userRepository,
             GoalDefinitionRepository goalDefinitionRepository,
             GoalPlanRepository goalPlanRepository,
             GoalConfigRepository goalConfigRepository,
-            DailyTaskService dailyTaskService
+            DailyTaskService dailyTaskService,
+            CharacterRepository characterRepository
     ) {
         this.userRepository = userRepository;
         this.goalDefinitionRepository = goalDefinitionRepository;
         this.goalPlanRepository = goalPlanRepository;
         this.goalConfigRepository = goalConfigRepository;
         this.dailyTaskService = dailyTaskService;
+        this.characterRepository = characterRepository;
     }
 
     @Transactional(readOnly = true)
@@ -126,11 +132,16 @@ public class OnboardingService {
 
         GoalPlan goalPlan = new GoalPlan();
         goalPlan.setGoalDefinition(goalDefinition);
-        goalPlan.setCharacterId(request.getCharacterId());
+
+        Character character = characterRepository.findById(request.getCharacterId())
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터 없음"));
+
+        goalPlan.setCharacter(character);
+
         goalPlan.setStartDate(request.getStartDate());
         goalPlan.setEndDate(request.getEndDate());
         goalPlan.setCurrentLevel(1); // 레벨 1로 초기화
-        goalPlan.setStatus("PROCEEDING");
+        goalPlan.setStatus(GoalStatus.ACTIVE);
         goalPlan.setUser(user);
 
         System.out.println("7. goalPlan save 직전");
@@ -139,7 +150,7 @@ public class OnboardingService {
 
         System.out.println(
                 "[OnboardingService] ✅ setup 저장 완료 | goalPlanId=" + goalPlan.getId()
-                        + ", userId=" + goalPlan.getUser().getId()
+                        + ", userId=" + goalPlan.getCharacter().getId()
                         + ", goalDefinitionId=" + goalPlan.getGoalDefinition().getId()
                         + ", alarmCycle=" + request.getAlarmCycle()
                         + ", emoji=" + request.getPreferredEmoji()
@@ -160,10 +171,10 @@ public class OnboardingService {
                 goalPlan.getId(),
                 goalPlan.getUser().getId(),
                 goalPlan.getGoalDefinitionId(),
-                goalPlan.getCharacterId(),
+                goalPlan.getCharacter().getId(),
                 goalPlan.getStartDate(),
                 goalPlan.getEndDate(),
-                goalPlan.getStatus(),
+                goalPlan.getStatus().toString(),
                 goalDefinition.getTitle(),
                 "목표 설정이 완료되었습니다."
         );

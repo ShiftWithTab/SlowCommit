@@ -55,6 +55,7 @@ export default function HomeScreen({ route }: Props) {
 
     const fetchCharacter = async (uid: number) => {
         try {
+            if (!uid) return;
             const res = await api.get(
                 `/characters/current?userId=${uid}`
             );

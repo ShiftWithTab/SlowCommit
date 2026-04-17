@@ -19,8 +19,9 @@ public class StatsService {
     private final DailyTaskRepository dailyTaskRepository;
 
     public StatsResponse getStats(Long userId) {
-        GoalPlan goalPlan = goalPlanRepository.findByUserId(userId)
-                .orElseThrow();
+        GoalPlan goalPlan = goalPlanRepository
+                .findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new IllegalArgumentException("목표 없음"));
 
         long completed = dailyTaskRepository.countByGoalPlanAndCompletedTrue(goalPlan);
         long total = dailyTaskRepository.countByGoalPlan(goalPlan);
