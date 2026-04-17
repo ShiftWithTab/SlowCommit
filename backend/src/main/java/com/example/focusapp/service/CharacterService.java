@@ -1,6 +1,8 @@
 package com.example.focusapp.service;
 
 import com.example.focusapp.dto.CharacterResponse;
+import com.example.focusapp.dto.CharacterListResponse;
+import com.example.focusapp.repository.CharacterRepository;
 import com.example.focusapp.entity.CharacterImage;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.entity.User;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,6 +24,7 @@ public class CharacterService {
     private final UserRepository userRepository;
     private final GoalPlanRepository goalPlanRepository;
     private final CharacterImageRepository characterImageRepository;
+    private final CharacterRepository characterRepository;
 
     @Transactional(readOnly = true)
     public CharacterResponse getCurrentCharacter(Long userId) {
@@ -31,7 +36,7 @@ public class CharacterService {
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
         int level = goalPlan.getCurrentLevel();
-        Long characterId = goalPlan.getCharacterId();
+        Long characterId = goalPlan.getCharacter().getId();
 
         int imageLevel = convertLevelToImageLevel(level);
 
@@ -52,5 +57,17 @@ public class CharacterService {
         if (level <= 6) return 2;
         if (level <= 8) return 3;
         return 4;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CharacterListResponse> getAllCharacters() {
+        return characterRepository.findAll()
+                .stream()
+                .map(c -> new CharacterListResponse(
+                        c.getId(),
+                        c.getName(),
+                        c.getBaseImageUrl()
+                ))
+                .toList();
     }
 }

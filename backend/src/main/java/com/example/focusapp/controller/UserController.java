@@ -1,7 +1,7 @@
 package com.example.focusapp.controller;
 
-import com.example.focusapp.dto.GuestUserResponse;
 import com.example.focusapp.service.UserService;
+import com.example.focusapp.service.OnboardingService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +12,31 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final OnboardingService onboardingService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, OnboardingService onboardingService) {
         this.userService = userService;
+        this.onboardingService = onboardingService;
     }
 
-    @PostMapping("/guest")
-    public ResponseEntity<?> createGuestUser() {
-        System.out.println("🔥 /api/users/guest 호출됨");
-        return ResponseEntity.ok(userService.createGuestUser());
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUser(userId));
+    }
+
+    @PatchMapping("/{userId}/username")
+    public ResponseEntity<?> updateUsername(
+            @PathVariable Long userId,
+            @RequestParam String username
+    ) {
+        return ResponseEntity.ok(userService.updateUsername(userId, username));
+    }
+
+    @PatchMapping("/{userId}/theme")
+    public ResponseEntity<?> updateTheme(
+            @PathVariable Long userId,
+            @RequestParam String theme
+    ) {
+        return ResponseEntity.ok(userService.updateTheme(userId, theme));
     }
 }

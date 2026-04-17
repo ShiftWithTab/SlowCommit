@@ -6,7 +6,7 @@ import UsernameScreen from '../screens/UsernameScreen';
 import GoalSetupScreen from '../screens/GoalSetupScreen';
 import HomeScreen from '../screens/HomeScreen';
 import StatsScreen from '../screens/StatsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
@@ -43,8 +43,8 @@ function MainTabs({ route }: any) {
                 initialParams={{ userId }}
             />
             <Tab.Screen
-                name="Profile"
-                component={ProfileScreen}
+                name="Settings"
+                component={SettingsScreen}
                 initialParams={{ userId }}
             />
         </Tab.Navigator>

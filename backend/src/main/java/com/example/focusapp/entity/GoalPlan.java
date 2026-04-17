@@ -29,8 +29,9 @@ public class GoalPlan {
     @JoinColumn(name = "goal_definition_id", nullable = false)
     private GoalDefinition goalDefinition;
 
-    @Column(name = "character_id")
-    private Long characterId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "character_id")
+    private Character character;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -41,8 +42,9 @@ public class GoalPlan {
     @Column(name = "current_level", nullable = false)
     private Integer currentLevel = 1;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    private GoalStatus status = GoalStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

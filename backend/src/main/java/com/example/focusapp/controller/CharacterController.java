@@ -1,10 +1,13 @@
 package com.example.focusapp.controller;
 
 import com.example.focusapp.dto.CharacterResponse;
+import com.example.focusapp.dto.CharacterListResponse;
 import com.example.focusapp.service.CharacterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/characters")
@@ -21,5 +24,10 @@ public class CharacterController {
         return ResponseEntity.ok(
                 characterService.getCurrentCharacter(userId)
         );
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CharacterListResponse>> getCharacters() {
+        return ResponseEntity.ok(characterService.getAllCharacters());
     }
 }

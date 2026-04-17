@@ -9,5 +9,5 @@ export type RootStackParamList = {
 export type MainTabParamList = {
     Home: { userId: number };
     Stats: { userId: number };
-    Profile: { userId: number };
+    Settings: { userId: number };
 };
