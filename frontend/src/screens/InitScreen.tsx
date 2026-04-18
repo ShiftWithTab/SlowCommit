@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from '../constants/storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Init'>;
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://172.20.1.227:8080/api';
 
 type StatusResponse = {
     userId: number;
@@ -26,11 +26,9 @@ export default function InitScreen({ navigation }: Props) {
     useEffect(() => {
         const init = async () => {
             try {
-                console.log('InitScreen 시작');
                 let userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
-                console.log('저장된 userId:', userId);
                 if (!userId) {
-                    const guestResponse = await fetch(`${BASE_URL}/api/users/guest`, {
+                    const guestResponse = await fetch(`${BASE_URL}/users/guest`, {
                         method: 'POST',
                     });
 
@@ -45,7 +43,7 @@ export default function InitScreen({ navigation }: Props) {
                 }
 
                 const statusResponse = await fetch(
-                    `${BASE_URL}/api/onboarding/status?userId=${userId}`
+                    `${BASE_URL}/onboarding/status?userId=${userId}`
                 );
 
                 if (!statusResponse.ok) {
