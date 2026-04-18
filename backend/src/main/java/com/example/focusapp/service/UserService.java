@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.focusapp.dto.UserResponse;
+import com.example.focusapp.dto.GuestUserResponse;
 
 @Service
 public class UserService {
@@ -17,6 +18,19 @@ public class UserService {
     private User getUserEntity(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+    }
+
+    @Transactional
+    public GuestUserResponse createGuestUser() {
+        User user = new User();
+        user.setUsername(null);
+        user = userRepository.save(user);
+
+        return new GuestUserResponse(
+                user.getId(),
+                user.getUsername(),
+                "게스트 사용자가 생성되었습니다."
+        );
     }
 
     @Transactional(readOnly = true)

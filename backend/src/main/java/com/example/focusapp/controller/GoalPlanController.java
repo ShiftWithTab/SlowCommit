@@ -2,6 +2,8 @@ package com.example.focusapp.controller;
 
 import com.example.focusapp.dto.GoalPlanResponse;
 import com.example.focusapp.dto.UpdateGoalRequest;
+import com.example.focusapp.dto.SetupRequest;
+import com.example.focusapp.dto.SetupResponse;
 import com.example.focusapp.service.GoalPlanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +26,21 @@ public class GoalPlanController {
         return ResponseEntity.ok(goalPlanService.getGoalPlans(userId));
     }
 
+    @GetMapping("/{goalId}")
+    public ResponseEntity<GoalPlanResponse> getGoal(@PathVariable Long goalId) {
+        return ResponseEntity.ok(goalPlanService.getGoal(goalId));
+    }
+
     @GetMapping("/users/{userId}/active")
     public ResponseEntity<List<GoalPlanResponse>> getActiveGoals(
             @PathVariable Long userId
     ) {
         return ResponseEntity.ok(goalPlanService.getActiveGoals(userId));
     }
-
+    @PostMapping
+    public ResponseEntity<SetupResponse> createGoalPlan(@RequestBody SetupRequest request){
+        return ResponseEntity.ok(goalPlanService.createGoalPlan(request));
+    }
     @PatchMapping("/{goalId}")
     public ResponseEntity<GoalPlanResponse> updateGoal(
             @PathVariable Long goalId,

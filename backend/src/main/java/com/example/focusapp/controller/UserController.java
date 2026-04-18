@@ -39,4 +39,8 @@ public class UserController {
     ) {
         return ResponseEntity.ok(userService.updateTheme(userId, theme));
     }
+    @PostMapping("/guest")
+    public ResponseEntity<?> createGuestUser() {
+        return ResponseEntity.ok(userService.createGuestUser());
+    }
 }

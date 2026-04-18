@@ -13,4 +13,5 @@ public class GoalPlanResponse {
     private Long characterId;
     private String characterName;
     private boolean isActive;
+    private String motto;
 }
