@@ -1,8 +1,10 @@
 export type GoalCategory = {
   id: number;
   name: string;
-  colorHex: string;
   emoji: string;
+  colorHex: string;
+  active: boolean;
+  motto?: string;
 };
 
 export type Task = {
@@ -12,6 +14,7 @@ export type Task = {
   currentLevel: number;
   message?: string;
   messageType?: string;
+  selectedDate: string;
 };
 
 export type DashboardSummary = {

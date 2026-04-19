@@ -22,7 +22,6 @@ const theme = {
 };
 
 export default function App() {
-    const [results, setResults] = useState<any[]>([]);
     const [current, setCurrent] = useState<any | null>(null);
     const [visible, setVisible] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
@@ -47,38 +46,27 @@ export default function App() {
     const checkResult = async () => {
         try {
             if (!userId) return;
-            const res = await api.get(`/goals/result/pending?userId=${userId}`);
+
+            const res = await api.get(`/goals/result/next?userId=${userId}`);
             const data = res.data;
 
-            if (!data || data.length === 0) return;
+            if (!data) return;
 
-            setResults(data);
-            setCurrent(data[0]);
+            setCurrent(data);
             setVisible(true);
 
         } catch (e) {
             console.log(e);
         }
     };
+
     const handleClose = async () => {
-        try {
-            if (!current) return;
-            api.patch(`/goals/${current.goalPlanId}/result/seen?userId=${userId}`);
-        } catch (e) {
-            console.log(e);
-        }
+        setVisible(false);
+        setCurrent(null);
 
-        const nextResults = results.slice(1);
-
-        if (nextResults.length === 0) {
-            setVisible(false);
-            setResults([]);
-            setCurrent(null);
-            return;
-        }
-
-        setResults(nextResults);
-        setCurrent(nextResults[0]);
+        setTimeout(() => {
+            checkResult();
+        }, 500);
     };
 
     return (

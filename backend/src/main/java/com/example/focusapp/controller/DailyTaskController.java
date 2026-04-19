@@ -25,13 +25,17 @@ public class DailyTaskController {
     private final GoalPlanRepository goalPlanRepository;
 
     @GetMapping("/active/{goalPlanId}")
-    public List<DailyTaskResponse> getTodayTasks(@PathVariable Long goalPlanId) {
-
+    public List<DailyTaskResponse> getTasksByDate(
+            @PathVariable Long goalPlanId,
+            @RequestParam String date
+    ) {
         GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
+        LocalDate targetDate = LocalDate.parse(date);
+
         List<DailyTask> tasks =
-                dailyTaskService.getTodayTasks(goalPlan, LocalDate.now());
+                dailyTaskService.getTodayTasks(goalPlan, targetDate);
 
         return tasks.stream()
                 .map(task -> new DailyTaskResponse(
@@ -43,7 +47,6 @@ public class DailyTaskController {
                 ))
                 .toList();
     }
-
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Long id) {
         return ResponseEntity.ok(dailyTaskService.toggle(id));
