@@ -1,4 +1,4 @@
-export type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 export type CycleOption = '매일' | '주 3회' | '주 5회' | '평일';
 
 export type GuestUserResponse = {

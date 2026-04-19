@@ -23,11 +23,21 @@ import type { CycleOption, Step } from '../types/onboarding';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../constants/storage';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회'];
+const emojiOptions = ['🌱', '🔥', '💫', '📚', '🏃‍♂️','🚀'];
+const characterOptions = [
+    { id: 1, emoji: '🐥' },
+    { id: 2, emoji: '🦔' },
+    { id: 3, emoji: '🍦' },
+    { id: 4, emoji: '🥔' },
+    { id: 5, emoji: '🐰' },
+    { id: 6, emoji: '🐯' },
+];
 
 export default function OnboardingScreen() {
     const navigation = useNavigation<NavigationProp>();
@@ -41,27 +51,46 @@ export default function OnboardingScreen() {
     const [nicknameMessage, setNicknameMessage] = useState('');
 
     const [goalTitle, setGoalTitle] = useState('');
+    const [motto, setMotto] = useState('');
     const [deadline, setDeadline] = useState('2026-04-30');
     const [cycle, setCycle] = useState<CycleOption>('주 5회');
+    const [preferredEmoji, setPreferredEmoji] = useState('🌱');
     const [characterName, setCharacterName] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
-    const progressText = useMemo(() => `${Math.min(step, 6)}/6`, [step]);
-    const progressWidth = useMemo<DimensionValue>(
-        () => `${(Math.min(step, 6) / 6) * 100}%`,
+
+    const [showCustomEmojiInput, setShowCustomEmojiInput] = useState(false);
+    const [customEmojiInput, setCustomEmojiInput] = useState('');
+
+    const [characterId, setCharacterId] = useState<number | null>(1);
+
+    const totalSteps = 8;
+
+    const progressText = useMemo(
+        () => `${Math.min(step, totalSteps)}/${totalSteps}`,
         [step]
     );
 
-    const canGoNickname = nickname.trim() !== '' && nicknameChecked && nicknameAvailable === true;
+    const progressWidth = useMemo<DimensionValue>(
+        () => `${(Math.min(step, totalSteps) / totalSteps) * 100}%`,
+        [step]
+    );
+
+    const canGoNickname =
+        nickname.trim() !== '' && nicknameChecked && nicknameAvailable === true;
     const canGoGoalTitle = goalTitle.trim() !== '';
+    const canGoMotto = motto.trim() !== '';
     const canGoDeadline = deadline.trim() !== '';
     const canGoCycle = cycle.trim() !== '';
-    const canComplete = characterName.trim() !== '';
+    const canGoEmoji = showCustomEmojiInput
+        ? customEmojiInput.trim() !== ''
+        : preferredEmoji.trim() !== '';
+    const canComplete = characterName.trim() !== '' && characterId !== null;
 
     const goNext = () =>
         setStep((prev) => {
-            if (prev === 6) return 6;
+            if (prev === totalSteps) return totalSteps as Step;
             return (prev + 1) as Step;
         });
 
@@ -70,6 +99,7 @@ export default function OnboardingScreen() {
             if (prev === 1) return 1;
             return (prev - 1) as Step;
         });
+
     const handleNicknameChange = (value: string) => {
         setNickname(value);
         setNicknameChecked(false);
@@ -77,6 +107,18 @@ export default function OnboardingScreen() {
         setNicknameMessage('');
     };
 
+    const handleEmojiNext = () => {
+        if (showCustomEmojiInput) {
+            if (!isSingleEmoji(customEmojiInput)) {
+                Alert.alert('입력 필요', '이모지는 1개만 올바르게 입력해주세요.');
+                return;
+            }
+
+            setPreferredEmoji(customEmojiInput.trim());
+        }
+
+        goNext();
+    };
     const cycleToNumber = (cycle: CycleOption): number => {
         switch (cycle) {
             case '매일':
@@ -91,14 +133,9 @@ export default function OnboardingScreen() {
     };
 
     const handleStart = async () => {
-        console.log('🔥 시작하기 버튼 클릭됨');
         try {
             setLoading(true);
-            console.log('📡 createGuestUser 호출 직전');
             const data = await createGuestUser();
-
-            console.log('✅ createGuestUser 성공 응답:', data);
-
             setUserId(data.userId);
             goNext();
         } catch (error) {
@@ -142,7 +179,6 @@ export default function OnboardingScreen() {
                 userId,
                 username: nickname.trim(),
             });
-            console.log('📡nickname 변경 완료 : ' + nickname);
             goNext();
         } catch (error) {
             console.error(error);
@@ -150,6 +186,14 @@ export default function OnboardingScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const isSingleEmoji = (value: string) => {
+        const trimmed = value.trim();
+        if (!trimmed) return false;
+
+        const emojiRegex = /^(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)$/u;
+        return emojiRegex.test(trimmed);
     };
 
     const handleComplete = async () => {
@@ -160,22 +204,30 @@ export default function OnboardingScreen() {
             return;
         }
 
+        if (showCustomEmojiInput && !isSingleEmoji(customEmojiInput)) {
+            Alert.alert('입력 필요', '이모지는 1개만 올바르게 입력해주세요.');
+            return;
+        }
+        if (!characterId) {
+            Alert.alert('입력 필요', '캐릭터를 선택해주세요.');
+            return;
+        }
+
         try {
             setSubmitLoading(true);
 
             const onboardingResult = await setupOnboarding({
                 userId,
                 goalTitle: goalTitle.trim(),
-                motto: `${goalTitle.trim()} 꾸준히 달성하기`,
-                characterId: 1,
+                motto: motto.trim(),
+                characterId,
                 characterName: characterName.trim(),
                 startDate: new Date().toISOString().slice(0, 10),
                 endDate: deadline,
                 alarmCycle: cycleToNumber(cycle),
-                preferredEmoji: '🌱',
+                preferredEmoji,
             });
 
-            console.log('✅ onboarding 완료:', onboardingResult);
 
             await AsyncStorage.setItem(
                 STORAGE_KEYS.GOAL_PLAN_ID,
@@ -201,12 +253,7 @@ export default function OnboardingScreen() {
                     },
                 ],
             });
-
         } catch (error: any) {
-            console.log('🔥 setup error status:', error.response?.status);
-            console.log('🔥 setup error data:', error.response?.data);
-            console.log('🔥 setup error message:', error.message);
-
             Alert.alert('설정 완료 실패', error.message);
         } finally {
             setSubmitLoading(false);
@@ -230,7 +277,7 @@ export default function OnboardingScreen() {
                             <View style={styles.startInfoCard}>
                                 <Text style={styles.startInfoTitle}>온보딩에서 정할 것</Text>
                                 <Text style={styles.startInfoText}>
-                                    별명 · 목표 이름 · 마감일 · 목표 주기 · 캐릭터 이름
+                                    별명 · 목표 이름 · 모토 · 마감일 · 목표 주기 · 이모지 · 캐릭터 이름
                                 </Text>
                             </View>
                         </View>
@@ -238,7 +285,6 @@ export default function OnboardingScreen() {
                         <View style={styles.footer}>
                             <PrimaryButton label="시작하기" loading={loading} onPress={handleStart} />
 
-                            {/* 테스트 계정들어가기 나중에 삭제할 것 */}
                             <Pressable
                                 style={[styles.button, { backgroundColor: '#444', marginTop: 10 }]}
                                 onPress={async () => {
@@ -331,6 +377,22 @@ export default function OnboardingScreen() {
                         stepText={progressText}
                         progressWidth={progressWidth}
                         onBack={goPrev}
+                        title="모토를 적어주세요"
+                        subtitle="목표를 이어가게 도와주는 한 문장을 적어보세요."
+                        footer={<PrimaryButton label="다음으로" disabled={!canGoMotto} onPress={goNext} />}
+                    >
+                        <FloatingField
+                            label="모토"
+                            value={motto}
+                            onChangeText={setMotto}
+                            placeholder="예: 포기하지 않고 끝까지"
+                        />
+                    </StepLayout>
+                ) : step === 5 ? (
+                    <StepLayout
+                        stepText={progressText}
+                        progressWidth={progressWidth}
+                        onBack={goPrev}
                         title="마감일을 정해주세요"
                         subtitle="지금은 문자열 입력으로 두고, 나중에 DatePicker로 바꾸면 돼요."
                         footer={<PrimaryButton label="다음으로" disabled={!canGoDeadline} onPress={goNext} />}
@@ -342,7 +404,7 @@ export default function OnboardingScreen() {
                             placeholder="YYYY-MM-DD"
                         />
                     </StepLayout>
-                ) : step === 5 ? (
+                ) : step === 6 ? (
                     <StepLayout
                         stepText={progressText}
                         progressWidth={progressWidth}
@@ -367,7 +429,58 @@ export default function OnboardingScreen() {
                             })}
                         </View>
                     </StepLayout>
-                ) : step === 6 ? (
+                ) : step === 7 ? (
+                    <StepLayout
+                        stepText={progressText}
+                        progressWidth={progressWidth}
+                        onBack={goPrev}
+                        title="대표 이모지를 골라주세요"
+                        subtitle="달력에 표시될 이모지예요."
+                        footer={<PrimaryButton label="다음으로" disabled={!canGoEmoji} onPress={handleEmojiNext} />}
+                    >
+                        <View style={styles.emojiGrid}>
+                            {emojiOptions.map((emoji) => {
+                                const selected = preferredEmoji === emoji && !showCustomEmojiInput;
+
+                                return (
+                                    <Pressable
+                                        key={emoji}
+                                        onPress={() => {
+                                            setPreferredEmoji(emoji);
+                                            setCustomEmojiInput('');
+                                            setShowCustomEmojiInput(false);
+                                        }}
+                                        style={[styles.emojiCard, selected && styles.emojiCardSelected]}
+                                    >
+                                        <Text style={styles.emojiValue}>{emoji}</Text>
+                                    </Pressable>
+                                );
+                            })}
+
+                            <Pressable
+                                onPress={() => setShowCustomEmojiInput((prev) => !prev)}
+                                style={[styles.emojiCard, showCustomEmojiInput && styles.emojiCardSelected]}
+                            >
+                                <Text style={styles.emojiPlus}>＋</Text>
+                            </Pressable>
+                        </View>
+
+                        {showCustomEmojiInput && (
+                            <View style={styles.customEmojiBox}>
+                                <FloatingField
+                                    label="직접 이모지 입력"
+                                    value={customEmojiInput}
+                                    onChangeText={setCustomEmojiInput}
+                                    placeholder="이모지 1개 입력"
+                                />
+
+                                <Text style={styles.helperText}>
+                                    이모지 1개만 입력할 수 있어요.
+                                </Text>
+                            </View>
+                        )}
+                    </StepLayout>
+                ) : step === 8 ? (
                     <StepLayout
                         stepText={progressText}
                         progressWidth={progressWidth}
@@ -383,9 +496,25 @@ export default function OnboardingScreen() {
                             />
                         }
                     >
-                        <View style={styles.characterCard}>
-                            <Text style={styles.characterEmoji}>🐣</Text>
-                            <Text style={styles.characterHint}>아직 작은 알 상태예요</Text>
+                        <View style={styles.characterGrid}>
+                            {characterOptions.map((item) => {
+                                const selected = characterId === item.id;
+
+                                return (
+                                    <Pressable
+                                        key={item.id}
+                                        onPress={() => setCharacterId(item.id)}
+                                        style={[
+                                            styles.characterSelectCard,
+                                            selected && styles.characterSelectCardSelected,
+                                        ]}
+                                    >
+                                        <View style={styles.characterEmojiWrap}>
+                                            <Text style={styles.characterSelectEmoji}>{item.emoji}</Text>
+                                        </View>
+                                    </Pressable>
+                                );
+                            })}
                         </View>
 
                         <FloatingField
@@ -494,17 +623,94 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#171717',
     },
-    characterCard: {
-        borderRadius: 28,
-        backgroundColor: '#fffbeb',
-        borderWidth: 1,
-        borderColor: '#fde68a',
-        paddingVertical: 28,
-        alignItems: 'center',
+    emojiGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'center',
+        gap: 14,
     },
-    characterEmoji: {
-        fontSize: 72,
+    emojiCard: {
+        width: 72,
+        height: 72,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e5e5e5',
+        backgroundColor: '#ffffff',
+
+        justifyContent: 'center',  // ⭐
+        alignItems: 'center',      // ⭐
+    },
+    emojiCardSelected: {
+        borderColor: '#86efac',
+        backgroundColor: '#f0fdf4',
+    },
+    emojiValue: {
+        fontSize: 28,
+        lineHeight: 30,
+        textAlign: 'center',
+    },
+    emojiPlus: {
+        fontSize: 26,
+        color: '#6b7280',
+        fontWeight: '700',
+    },
+
+    customEmojiBox: {
+        marginTop: 14,
+    },
+
+    helperText: {
+        marginTop: 8,
+        fontSize: 12,
+        color: '#737373',
+    },
+    // characterCard: {
+    //     borderRadius: 28,
+    //     backgroundColor: '#fffbeb',
+    //     borderWidth: 1,
+    //     borderColor: '#fde68a',
+    //     paddingVertical: 28,
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    // },
+    // characterEmoji: {
+    //     fontSize: 72,
+    // },
+    characterGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: 12,
+    },
+
+    characterSelectCard: {
+        width: 72,
+        height: 72,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: '#e5e5e5',
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    characterSelectCardSelected: {
+        borderColor: '#86efac',
+        backgroundColor: '#f0fdf4',
+        transform: [{ scale: 1.03 }],
+    },
+
+    characterEmojiWrap: {
+        width: 32,
+        height: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    characterSelectEmoji: {
+        fontSize: 28,
+        lineHeight: 30,
+        textAlign: 'center',
     },
     characterHint: {
         marginTop: 8,
@@ -541,7 +747,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
     buttonText: {
         color: '#fff',
         fontSize: 15,

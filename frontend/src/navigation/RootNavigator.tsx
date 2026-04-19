@@ -8,8 +8,12 @@ import HomeScreen from '../screens/HomeScreen';
 import StatsScreen from '../screens/StatsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import CategoryCreateScreen from '../screens/CategoryCreateScreen';
 
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
+
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -27,9 +31,14 @@ function MainTabs({ route }: any) {
                     height: 70,
                     paddingBottom: 10,
                     paddingTop: 8,
+                    borderTopWidth: 0,
                 },
                 tabBarActiveTintColor: '#d8c2ff',
                 tabBarInactiveTintColor: '#8b8b8b',
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    fontWeight: '700',
+                },
             }}
         >
             <Tab.Screen
@@ -52,6 +61,13 @@ function MainTabs({ route }: any) {
 }
 
 export default function RootNavigator() {
+    const [fontsLoaded] = useFonts({
+        ...Ionicons.font,
+    });
+
+    if (!fontsLoaded) {
+        return null;
+    }
     return (
         <Stack.Navigator initialRouteName="Onboarding" screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
@@ -59,6 +75,7 @@ export default function RootNavigator() {
             <Stack.Screen name="Username" component={UsernameScreen} />
             <Stack.Screen name="GoalSetup" component={GoalSetupScreen} />
             <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="CategoryCreate" component={CategoryCreateScreen}/>
         </Stack.Navigator>
     );
 }

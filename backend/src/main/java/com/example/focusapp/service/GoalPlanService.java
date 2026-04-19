@@ -2,10 +2,15 @@ package com.example.focusapp.service;
 
 import com.example.focusapp.dto.GoalPlanResponse;
 import com.example.focusapp.dto.UpdateGoalRequest;
+import com.example.focusapp.dto.SetupRequest;
+import com.example.focusapp.dto.SetupResponse;
 import com.example.focusapp.entity.*;
 import com.example.focusapp.entity.Character;
 import com.example.focusapp.repository.CharacterRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
+import com.example.focusapp.repository.UserRepository;
+import com.example.focusapp.repository.GoalDefinitionRepository;
+import com.example.focusapp.repository.GoalConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +24,11 @@ public class GoalPlanService {
 
     private final GoalPlanRepository goalPlanRepository;
     private final CharacterRepository characterRepository;
+
+    private final UserRepository userRepository;
+    private final GoalDefinitionRepository goalDefinitionRepository;
+    private final GoalConfigRepository goalConfigRepository;
+    private final DailyTaskService dailyTaskService;
 
     @Transactional
     public List<GoalPlanResponse> getGoalPlans(Long userId) {
@@ -73,6 +83,81 @@ public class GoalPlanService {
 
         return toDto(plan);
     }
+    //sje 추가
+    @Transactional(readOnly = true)
+    public GoalPlanResponse getGoal(Long goalId) {
+        GoalPlan plan = goalPlanRepository.findById(goalId)
+                .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
+
+        updateStatusIfExpired(plan);
+
+        return toDto(plan);
+    }
+
+    @Transactional
+    public SetupResponse createGoalPlan(SetupRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
+
+        boolean hasUsername = user.getUsername() != null && !user.getUsername().trim().isEmpty();
+        if (!hasUsername) {
+            throw new IllegalStateException("별명을 먼저 설정해주세요.");
+        }
+
+        boolean alreadyHasGoal = goalDefinitionRepository.existsByUserIdAndTitle(
+                request.getUserId(), request.getGoalTitle().trim());
+        if (alreadyHasGoal) {
+            throw new IllegalStateException("이미 목표가 존재합니다.");
+        }
+
+        GoalDefinition goalDefinition = new GoalDefinition();
+        goalDefinition.setUserId(request.getUserId());
+        goalDefinition.setTitle(request.getGoalTitle());
+        goalDefinition.setMotto(request.getMotto());
+        goalDefinition = goalDefinitionRepository.save(goalDefinition);
+
+        GoalPlan goalPlan = new GoalPlan();
+        goalPlan.setGoalDefinition(goalDefinition);
+
+        Character character = characterRepository.findById(request.getCharacterId())
+                .orElseThrow(() -> new IllegalArgumentException("캐릭터가 존재하지 않습니다."));
+
+        goalPlan.setCharacter(character);
+        goalPlan.setStartDate(request.getStartDate());
+        goalPlan.setEndDate(request.getEndDate());
+        goalPlan.setCurrentLevel(1);
+        goalPlan.setStatus(GoalStatus.ACTIVE);
+        goalPlan.setUser(user);
+
+        goalPlan = goalPlanRepository.save(goalPlan);
+
+        String emoji = request.getPreferredEmoji();
+        if (emoji == null || emoji.trim().isEmpty()) {
+            throw new IllegalArgumentException("이모지를 입력해주세요.");
+        }
+
+        GoalConfig goalConfig = GoalConfig.builder()
+                .goalPlan(goalPlan)
+                .alarmCycle(request.getAlarmCycle())
+                .preferredEmoji(request.getPreferredEmoji())
+                .build();
+
+        goalConfigRepository.saveAndFlush(goalConfig);
+
+        dailyTaskService.generateInitialTasks(goalPlan.getId());
+
+        return new SetupResponse(
+                goalPlan.getId(),
+                goalPlan.getUser().getId(),
+                goalPlan.getGoalDefinitionId(),
+                goalPlan.getCharacter().getId(),
+                goalPlan.getStartDate(),
+                goalPlan.getEndDate(),
+                goalPlan.getStatus().toString(),
+                goalDefinition.getTitle(),
+                "목표 설정이 완료되었습니다."
+        );
+    }
 
     @Transactional
     public GoalPlanResponse updateStatus(Long goalId, String status) {
@@ -126,6 +211,10 @@ public class GoalPlanService {
                 ? plan.getCharacter().getName()
                 : null;
 
+        String motto = plan.getGoalDefinition() != null
+                ? plan.getGoalDefinition().getMotto()
+                : null;
+
         boolean active = plan.getStatus() == GoalStatus.ACTIVE;
 
         return new GoalPlanResponse(
@@ -134,7 +223,8 @@ public class GoalPlanService {
                 emoji,
                 characterId,
                 characterName,
-                active
+                active,
+                motto
         );
     }
 }

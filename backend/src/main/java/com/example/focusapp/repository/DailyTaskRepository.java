@@ -8,6 +8,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
     boolean existsByGoalPlanAndTargetDate(GoalPlan goalPlan, LocalDate targetDate);
     boolean existsByGoalPlanIdAndTargetDate(Long goalPlanId, LocalDate targetDate);
@@ -25,5 +28,20 @@ public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
     Optional<DailyTask> findTopByGoalPlanAndTargetDateLessThanEqualOrderByTargetDateDesc(
             GoalPlan goalPlan,
             LocalDate date
+    );
+    @Query(value = """
+        SELECT dt.target_date
+          FROM daily_tasks dt
+         WHERE dt.goal_plan_id  = :goalPlanId
+         AND dt.target_date >= :startDate
+         AND dt.target_date < :endDate
+         GROUP BY dt.goal_plan_id,target_date
+        HAVING COUNT(*) = SUM(CASE WHEN dt.completed = 1 THEN 1 ELSE 0 END)
+         ORDER BY dt.target_date
+        """, nativeQuery = true)
+    List<java.sql.Date> findCompletedDatesByGoalPlanId(
+            @Param("goalPlanId") Long goalPlanId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 }

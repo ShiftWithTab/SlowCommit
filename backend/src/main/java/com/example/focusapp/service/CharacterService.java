@@ -35,10 +35,17 @@ public class CharacterService {
         GoalPlan goalPlan = goalPlanRepository.findActiveByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
+        System.out.println("goalPlanId = " + goalPlan.getId());
+        System.out.println("level = " + goalPlan.getCurrentLevel());
+        System.out.println("characterId = " + goalPlan.getCharacter().getId());
+
+
         int level = goalPlan.getCurrentLevel();
         Long characterId = goalPlan.getCharacter().getId();
 
         int imageLevel = convertLevelToImageLevel(level);
+
+        System.out.println("imageLevel = " + imageLevel);
 
         CharacterImage image = characterImageRepository
                 .findByCharacterIdAndLevel(characterId, imageLevel)

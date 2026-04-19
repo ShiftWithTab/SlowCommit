@@ -4,6 +4,7 @@ export type RootStackParamList = {
     Username: { userId: number };
     GoalSetup: { userId: number };
     MainTabs: { userId: number };
+    CategoryCreate: undefined;
 };
 
 export type MainTabParamList = {

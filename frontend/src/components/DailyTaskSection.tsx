@@ -11,11 +11,13 @@ export default function DailyTaskSection({
                                              onLevelChange,
                                              refreshKey,
                                              onLevelUp,
+                                             onTasksUpdated,
                                          }: {
     goalPlanId: number;
     onLevelChange?: (level: number) => void;
     refreshKey?: number;
     onLevelUp?: () => void;
+    onTasksUpdated?: () => void;
 }) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [levelUpTrigger, setLevelUpTrigger] = useState(false);
@@ -141,6 +143,7 @@ export default function DailyTaskSection({
 
             onLevelChange?.(currentLevel);
             onLevelUp?.();
+            onTasksUpdated?.();
 
             if (messageType === 'LEVEL_UP') {
                 setLevelUpTrigger(true);

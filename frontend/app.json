@@ -9,7 +9,8 @@
       "**/*"
     ],
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ]
   }
 }
