@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
   RefreshControl,
@@ -14,8 +14,8 @@ import { api } from '../api/client';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 import { CONFIG } from '../constants/config';
-import {mockCategories} from "../api/mock";
 import CategoryChip from "../components/CategoryChip";
+import { GoalCategory } from "../types";
 
 export default function StatsScreen() {
   const [stats, setStats] = useState({
@@ -27,45 +27,105 @@ export default function StatsScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [characterImageUrl, setCharacterImageUrl] = useState<string | null>(null);
+  const [categories, setCategories] = useState<GoalCategory[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null);
+  const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
 
   useFocusEffect(
       useCallback(() => {
-        fetchAll();
+        void loadCategories();
       }, [])
   );
 
-  const fetchAll = async () => {
-    await Promise.all([fetchStats(), fetchCharacter()]);
-  };
+  useEffect(() => {
+    if (goalPlanId) {
+      void fetchCharacter();
+      void fetchStats();
+    }
+  }, [goalPlanId]);
 
   const fetchStats = async () => {
+    try {
+      if (!goalPlanId) return;
+
+      const res = await api.get('/stats', {
+        params: { goalPlanId }
+      });
+
+      setStats(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const loadCategories = async () => {
     try {
       const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
       if (!userId) return;
 
-      const res = await api.get(`/stats/${userId}`);
-      setStats(res.data);
-    } catch (err) {
+      const goalRes = await api.get(`/goals/users/${userId}`);
+
+      const getPastelColor = () => {
+        const h = Math.floor(Math.random() * 360);
+        const s = 55;
+        const l = 80;
+        return `hsl(${h}, ${s}%, ${l}%)`;
+      };
+
+      const mapped: GoalCategory[] = goalRes.data
+          .sort((a: any, b: any) => b.id - a.id)
+          .map((goal: any) => ({
+            id: goal.id,
+            name: goal.title,
+            emoji: goal.emoji,
+            active: goal.active,
+            motto: goal.motto,
+            colorHex: getPastelColor(),
+          }));
+
+      setCategories(mapped);
+
+      // 👉 최초 1번만 설정
+      if (mapped.length > 0) {
+        const active = mapped.find(c => c.active) || mapped[0];
+
+        setSelectedGoalId(active.id);
+        setGoalPlanId(active.id);
+      }
+
+    } catch (e) {
+      console.log(e);
     }
   };
 
   const fetchCharacter = async () => {
     try {
-      const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
-      if (!userId) return;
+      if (!goalPlanId) return;
 
-      const res = await api.get(`/characters/current?userId=${userId}`);
+      const res = await api.get(`/characters/current?goalPlanId=${goalPlanId}`);
       const path = res.data.imageUrl;
-      const fullUrl = path?.startsWith('http') ? path : `${CONFIG.IMAGE_BASE_URL}${path}`;
+      const fullUrl = path?.startsWith('http')
+          ? path
+          : `${CONFIG.IMAGE_BASE_URL}${path}`;
 
       setCharacterImageUrl(fullUrl);
     } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleSelectCategory = async (goalId: number) => {
+    try {
+      setSelectedGoalId(goalId);
+      setGoalPlanId(goalId);
+    } catch (e) {
+      console.log(e);
     }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchAll();
+    await fetchStats();
     setRefreshing(false);
   };
 
@@ -83,11 +143,18 @@ export default function StatsScreen() {
           }
       >
         <Text style={styles.title}>Stats</Text>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {mockCategories.map((category) => (
-              <CategoryChip key={category.id} category={category} />
+          {categories.map((category) => (
+              <CategoryChip
+                  key={category.id}
+                  category={category}
+                  isSelected={category.id === selectedGoalId}
+                  onPress={() => handleSelectCategory(category.id)}
+              />
           ))}
         </ScrollView>
+
         <View style={styles.card}>
           <Text style={styles.label}>현재 캐릭터</Text>
           <Text style={styles.value}>Lv.{stats.currentLevel}</Text>
@@ -99,6 +166,7 @@ export default function StatsScreen() {
               />
           )}
         </View>
+
         <View style={styles.card}>
           <Text style={styles.label}>완료율</Text>
           <Text style={styles.value}>{rate}%</Text>
@@ -151,10 +219,9 @@ const styles = StyleSheet.create({
   character: {
     width: 100,
     height: 100,
-    marginTop: 0,
     alignSelf: 'center',
   },
   chipRow: {
-    marginBottom: 15,
+    marginBottom: 15, paddingLeft: 5
   },
 });

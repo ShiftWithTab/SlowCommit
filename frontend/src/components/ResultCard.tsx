@@ -15,7 +15,6 @@ import { CONFIG } from "../constants/config";
 
 const ResultCard = ({ type, message, level, character, goalTitle, onClose }: any) => {
     const ref = useRef<ViewShot | null>(null);
-
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [imgError, setImgError] = useState(false);
@@ -32,8 +31,9 @@ const ResultCard = ({ type, message, level, character, goalTitle, onClose }: any
 
     // 📸 공통 캡처 함수
     const captureImage = async () => {
-        await new Promise((r) => setTimeout(r, 150));
-        return await ref.current?.capture();
+        await new Promise(r => setTimeout(r, 150));
+        if (!ref.current) return;
+        return ref.current.capture();
     };
 
     // 📤 공유
@@ -240,8 +240,8 @@ const iconButtonStyle = {
     height: 40,
     borderRadius: 20,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center"
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
 };
 
 export default ResultCard;

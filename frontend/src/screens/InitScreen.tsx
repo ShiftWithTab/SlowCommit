@@ -4,10 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { STORAGE_KEYS } from '../constants/storage';
-
+import { CONFIG } from '../constants/config';
 type Props = NativeStackScreenProps<RootStackParamList, 'Init'>;
 
-const BASE_URL = 'http://172.20.1.227:8080/api';
+const BASE_URL = CONFIG.BASE_URL;
 
 type StatusResponse = {
     userId: number;
