@@ -52,15 +52,28 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
 
         try {
             setLoading(true);
-            //수정필요 (실제 api주소로)
+
+            const today = new Date();
+
+            const finalStartDate = startDate ?? today;
+
+            const finalEndDate = endDate ?? new Date(
+                finalStartDate.getFullYear() + 1,
+                finalStartDate.getMonth(),
+                finalStartDate.getDate()
+            );
+
+            const interval = parseInterval(repeatCycle);
+
+            const formattedTime = getFormattedTime();
+
             await api.post('/routines', {
-                goalId: Number(goalId),
+                goalPlanId: Number(goalId),
                 title: title.trim(),
-                startDate: startDate ? formatDate(startDate) : formatDate(new Date()),
-                endDate: endDate ? formatDate(endDate) : formatDate(new Date()),
-                repeatCycle,
-                time: time === '없음' ? null : time,
-                manualAdd,
+                startDate: formatDate(finalStartDate),
+                endDate: formatDate(finalEndDate),
+                interval: interval,
+                time: formattedTime,
             });
 
             Alert.alert('완료', '루틴이 생성되었습니다.');
@@ -71,6 +84,29 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const getFormattedTime = (): string | null => {
+        if (time === '없음') return null;
+
+        let h = hour;
+
+        if (ampm === 'PM' && hour < 12) h += 12;
+        if (ampm === 'AM' && hour === 12) h = 0;
+
+        return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+    };
+
+    const parseInterval = (cycle: string): number | null => {
+        if (cycle === '매일') return 1;
+        if (cycle === '일주일마다') return 7;
+        if (cycle === '매월') return 30;
+        if (cycle === '매년') return 365;
+
+        const match = cycle.match(/(\d+)일마다/);
+        if (match) return Number(match[1]);
+
+        return 1;
     };
 
     return (

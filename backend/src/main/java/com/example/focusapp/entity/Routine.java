@@ -8,53 +8,54 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
+import com.example.focusapp.entity.Routine;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
-@Table(name = "daily_tasks")
-@SQLDelete(sql = "UPDATE daily_tasks SET deleted_at = now() WHERE id = ?")
+@Table(name = "routines")
+@SQLDelete(sql = "UPDATE routines SET deleted_at = now() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor
-public class DailyTask {
+public class Routine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "goal_plan_id", nullable = false)
     private GoalPlan goalPlan;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "routine_id")
-    private Routine routine;
-
-    @Column(nullable = false)
-    private LocalDate targetDate;
 
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDate endDate;
+
+    @Column(name = "`interval`")
+    private Integer interval;
+
+    @Column(name = "time")
+    private LocalTime time;
+
     @Column(nullable = false)
-    private boolean completed = false;
-
-    private LocalDateTime completedAt;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private boolean active = true;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public DailyTask(GoalPlan goalPlan, LocalDate targetDate) {
-        this.goalPlan = goalPlan;
-        this.targetDate = targetDate;
-    }
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

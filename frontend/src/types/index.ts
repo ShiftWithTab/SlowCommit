@@ -8,6 +8,7 @@ export type GoalCategory = {
 };
 
 export type Task = {
+  routineId: boolean;
   id: number;
   title: string;
   completed: boolean;

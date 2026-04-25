@@ -79,6 +79,7 @@ export default function DailyTaskSection({
                 const res = await api.post(`/daily-tasks`, {
                     goalPlanId,
                     title,
+                    targetDate: selectedDate,
                 });
 
                 setTasks((prev) => [...prev, res.data]);
@@ -100,6 +101,15 @@ export default function DailyTaskSection({
     const handleDelete = async () => {
         if (!isActive) return;
         if (!editTaskItem) return;
+        if (editTaskItem.routineId) {
+            Toast.show({
+                type: 'info',
+                text1: '루틴으로 생성된 할 일은 삭제할 수 없습니다',
+                position: 'bottom',
+            });
+            return;
+        }
+
         const id = editTaskItem.id;
         const prevTasks = tasks;
         setTasks((prev) => prev.filter((t) => t.id !== id));
@@ -125,6 +135,14 @@ export default function DailyTaskSection({
 
     const handleLongPress = (task: Task) => {
         if (!isActive) return;
+        if (task.routineId) {
+            Toast.show({
+                type: 'info',
+                text1: '루틴으로 생성된 할 일은 수정할 수 없습니다',
+                position: 'bottom',
+            });
+            return;
+        }
         setEditTaskItem(task);
         setModalVisible(true);
     };

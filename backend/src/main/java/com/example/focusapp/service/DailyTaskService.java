@@ -7,10 +7,13 @@ import com.example.focusapp.dto.UpdateDailyTaskRequest;
 import com.example.focusapp.entity.DailyTask;
 import com.example.focusapp.entity.GoalConfig;
 import com.example.focusapp.entity.GoalPlan;
+import com.example.focusapp.entity.Routine;
 import com.example.focusapp.exception.NotFoundException;
+import com.example.focusapp.exception.BadRequestException;
 import com.example.focusapp.repository.DailyTaskRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.repository.GoalConfigRepository;
+import com.example.focusapp.repository.RoutineRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +34,7 @@ public class DailyTaskService {
     private final DailyTaskRepository dailyTaskRepository;
     private final GoalPlanRepository goalPlanRepository;
     private final GoalConfigRepository goalConfigRepository;
+    private final RoutineRepository routineRepository;
     private final Random random = new Random();
 
     /**
@@ -80,12 +84,13 @@ public class DailyTaskService {
      */
     @Transactional
     public DailyTaskResponse toggle(Long id) {
+
         DailyTask dailyTask = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("DailyTask 없음"));
 
         GoalPlan goalPlan = dailyTask.getGoalPlan();
 
-        int beforeLevel = goalPlan.getCurrentLevel(); // ⭐ 이전 레벨 저장
+        int beforeLevel = goalPlan.getCurrentLevel();
 
         dailyTask.setCompleted(!dailyTask.isCompleted());
 
@@ -108,6 +113,7 @@ public class DailyTaskService {
         return new DailyTaskResponse(
                 dailyTask.getId(),
                 goalPlan.getId(),
+                dailyTask.getRoutine() != null ? dailyTask.getRoutine().getId() : null,
                 dailyTask.getTitle(),
                 dailyTask.isCompleted(),
                 afterLevel,
@@ -231,6 +237,7 @@ public class DailyTaskService {
 
     @Transactional
     public DailyTaskResponse create(CreateDailyTaskRequest req) {
+
         GoalPlan goalPlan = goalPlanRepository.findById(req.getGoalPlanId())
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
@@ -238,7 +245,13 @@ public class DailyTaskService {
         task.setGoalPlan(goalPlan);
         task.setTitle(req.getTitle());
         task.setCompleted(false);
-        task.setTargetDate(LocalDate.now());
+        task.setTargetDate(req.getTargetDate());
+
+        if (req.getRoutineId() != null) {
+            Routine routine = routineRepository.findById(req.getRoutineId())
+                    .orElseThrow(() -> new NotFoundException("Routine 없음"));
+            task.setRoutine(routine);
+        }
 
         dailyTaskRepository.save(task);
 
@@ -247,18 +260,24 @@ public class DailyTaskService {
         return new DailyTaskResponse(
                 task.getId(),
                 goalPlan.getId(),
+                task.getRoutine() != null ? task.getRoutine().getId() : null,
                 task.getTitle(),
                 task.isCompleted(),
                 goalPlan.getCurrentLevel()
         );
     }
+
     @Transactional
     public DailyTaskResponse updateTitle(Long id, String title) {
         DailyTask task = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task 없음"));
 
         if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("제목은 비어 있을 수 없습니다");
+            throw new BadRequestException("제목은 비어 있을 수 없습니다");
+        }
+
+        if (task.getRoutine() != null) {
+            throw new BadRequestException("루틴 기반 task는 수정할 수 없습니다");
         }
 
         task.setTitle(title.trim());
@@ -266,6 +285,7 @@ public class DailyTaskService {
         return new DailyTaskResponse(
                 task.getId(),
                 task.getGoalPlan().getId(),
+                task.getRoutine() != null ? task.getRoutine().getId() : null,
                 task.getTitle(),
                 task.isCompleted(),
                 task.getGoalPlan().getCurrentLevel()
@@ -277,8 +297,15 @@ public class DailyTaskService {
         DailyTask task = dailyTaskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task 없음"));
 
-        GoalPlan goalPlan = task.getGoalPlan();
+        if (task.getDeletedAt() != null) {
+            throw new NotFoundException("이미 삭제된 Task");
+        }
 
+        if (task.getRoutine() != null) {
+            throw new BadRequestException("루틴 task는 삭제할 수 없습니다");
+        }
+
+        GoalPlan goalPlan = task.getGoalPlan();
         dailyTaskRepository.delete(task);
         recalculateLevel(goalPlan);
     }

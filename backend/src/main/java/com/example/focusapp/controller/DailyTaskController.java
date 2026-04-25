@@ -41,12 +41,14 @@ public class DailyTaskController {
                 .map(task -> new DailyTaskResponse(
                         task.getId(),
                         goalPlan.getId(),
+                        task.getRoutine() != null ? task.getRoutine().getId() : null,
                         task.getTitle(),
                         task.isCompleted(),
                         goalPlan.getCurrentLevel()
                 ))
                 .toList();
     }
+
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<DailyTaskResponse> toggle(@PathVariable Long id) {
         return ResponseEntity.ok(dailyTaskService.toggle(id));
