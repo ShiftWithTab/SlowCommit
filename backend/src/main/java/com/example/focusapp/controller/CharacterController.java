@@ -19,13 +19,13 @@ public class CharacterController {
 
     @GetMapping("/current")
     public ResponseEntity<CharacterResponse> getCurrentCharacter(
-            @RequestParam Long userId
+            @RequestParam Long goalPlanId
     ) {
         return ResponseEntity.ok(
-                characterService.getCurrentCharacter(userId)
+                characterService.getCurrentCharacterByGoalPlan(goalPlanId)
         );
     }
-
+    
     @GetMapping
     public ResponseEntity<List<CharacterListResponse>> getCharacters() {
         return ResponseEntity.ok(characterService.getAllCharacters());

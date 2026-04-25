@@ -6,6 +6,7 @@ import com.example.focusapp.repository.CharacterRepository;
 import com.example.focusapp.entity.CharacterImage;
 import com.example.focusapp.entity.GoalPlan;
 import com.example.focusapp.entity.User;
+import com.example.focusapp.entity.GoalStatus;
 import com.example.focusapp.exception.NotFoundException;
 import com.example.focusapp.repository.CharacterImageRepository;
 import com.example.focusapp.repository.GoalPlanRepository;
@@ -32,7 +33,8 @@ public class CharacterService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User 없음"));
 
-        GoalPlan goalPlan = goalPlanRepository.findActiveByUserId(userId)
+        GoalPlan goalPlan = goalPlanRepository
+                .findTopByUserIdAndStatusOrderByCreatedAtDesc(userId, GoalStatus.ACTIVE)
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
 
         System.out.println("goalPlanId = " + goalPlan.getId());
@@ -46,6 +48,28 @@ public class CharacterService {
         int imageLevel = convertLevelToImageLevel(level);
 
         System.out.println("imageLevel = " + imageLevel);
+
+        CharacterImage image = characterImageRepository
+                .findByCharacterIdAndLevel(characterId, imageLevel)
+                .orElseThrow(() -> new NotFoundException("캐릭터 이미지 없음"));
+
+        return new CharacterResponse(
+                characterId,
+                image.getImageUrl(),
+                level
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public CharacterResponse getCurrentCharacterByGoalPlan(Long goalPlanId) {
+
+        GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
+                .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
+
+        int level = goalPlan.getCurrentLevel();
+        Long characterId = goalPlan.getCharacter().getId();
+
+        int imageLevel = convertLevelToImageLevel(level);
 
         CharacterImage image = characterImageRepository
                 .findByCharacterIdAndLevel(characterId, imageLevel)

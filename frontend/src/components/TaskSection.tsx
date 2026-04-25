@@ -33,7 +33,7 @@ export default function TaskSection({
         </View>
 
         {tasks.length === 0 ? (
-            <Text style={styles.emptyText}>오늘 할 일이 없습니다</Text>
+            <Text style={styles.emptyText}>할 일이 없습니다</Text>
         ) : (
             tasks.map((task) => (
                 <Pressable

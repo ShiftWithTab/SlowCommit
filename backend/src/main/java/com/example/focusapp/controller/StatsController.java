@@ -12,8 +12,10 @@ public class StatsController {
 
     private final StatsService statsService;
 
-    @GetMapping("/{userId}")
-    public StatsResponse getStats(@PathVariable Long userId) {
-        return statsService.getStats(userId);
+    @GetMapping
+    public StatsResponse getStats(
+            @RequestParam Long goalPlanId
+    ) {
+        return statsService.getStatsByGoalPlan(goalPlanId);
     }
 }

@@ -8,12 +8,16 @@ import TaskInputModal from '../components/TaskInputModal';
 
 export default function DailyTaskSection({
                                              goalPlanId,
+                                             selectedDate,
+                                             isActive,
                                              onLevelChange,
                                              refreshKey,
                                              onLevelUp,
                                              onTasksUpdated,
                                          }: {
     goalPlanId: number;
+    selectedDate: string;
+    isActive: boolean;
     onLevelChange?: (level: number) => void;
     refreshKey?: number;
     onLevelUp?: () => void;
@@ -27,11 +31,16 @@ export default function DailyTaskSection({
 
     useEffect(() => {
         fetchTask();
-    }, [goalPlanId, refreshKey]);
+    }, [goalPlanId, selectedDate, refreshKey]);
 
     const fetchTask = async () => {
         try {
-            const res = await api.get(`/daily-tasks/active/${goalPlanId}`);
+            const res = await api.get(
+                `/daily-tasks/active/${goalPlanId}`,
+                {
+                    params: { date: selectedDate }
+                }
+            );
 
             const taskList = Array.isArray(res.data)
                 ? res.data
@@ -49,6 +58,7 @@ export default function DailyTaskSection({
 
     const handleSubmit = async (title: string) => {
         try {
+            if (!isActive) return;
             if (editTaskItem) {
                 setTasks((prev) =>
                     prev.map((t) =>
@@ -88,6 +98,7 @@ export default function DailyTaskSection({
     };
 
     const handleDelete = async () => {
+        if (!isActive) return;
         if (!editTaskItem) return;
         const id = editTaskItem.id;
         const prevTasks = tasks;
@@ -113,11 +124,13 @@ export default function DailyTaskSection({
     };
 
     const handleLongPress = (task: Task) => {
+        if (!isActive) return;
         setEditTaskItem(task);
         setModalVisible(true);
     };
 
     const toggleTask = async (id: number) => {
+        if (!isActive) return;
         const prevTasks = tasks;
 
         setTasks((prev) =>
@@ -164,12 +177,21 @@ export default function DailyTaskSection({
     return (
         <>
             <TaskSection
-                title="오늘 목표"
+                title="목표"
                 color="#bbf7d0"
                 tasks={tasks}
-                onToggle={toggleTask}
+                onToggle={isActive ? toggleTask : undefined}
                 onAdd={() => {
-                    setEditTaskItem(null); // ⭐ 추가 모드
+                    if (!isActive) {
+                        Toast.show({
+                            type: 'info',
+                            text1: '종료된 목표는 추가할 수 없어요',
+                            position: 'bottom',
+                        });
+                        return;
+                    }
+
+                    setEditTaskItem(null);
                     setModalVisible(true);
                 }}
                 onLongPress={handleLongPress}

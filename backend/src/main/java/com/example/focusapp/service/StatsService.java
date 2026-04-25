@@ -18,10 +18,10 @@ public class StatsService {
     private final GoalPlanRepository goalPlanRepository;
     private final DailyTaskRepository dailyTaskRepository;
 
-    public StatsResponse getStats(Long userId) {
-        GoalPlan goalPlan = goalPlanRepository
-                .findTopByUserIdOrderByCreatedAtDesc(userId)
-                .orElseThrow(() -> new IllegalArgumentException("목표 없음"));
+    public StatsResponse getStatsByGoalPlan(Long goalPlanId) {
+
+        GoalPlan goalPlan = goalPlanRepository.findById(goalPlanId)
+                .orElseThrow(() -> new NotFoundException("목표 없음"));
 
         long completed = dailyTaskRepository.countByGoalPlanAndCompletedTrue(goalPlan);
         long total = dailyTaskRepository.countByGoalPlan(goalPlan);
@@ -29,7 +29,7 @@ public class StatsService {
         return new StatsResponse(
                 (int) completed,
                 (int) total,
-                0,
+                0, // 🔥 streak 아직 안함
                 goalPlan.getCurrentLevel()
         );
     }

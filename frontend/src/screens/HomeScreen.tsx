@@ -18,57 +18,80 @@ import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
 import DailyTaskSection from '../components/DailyTaskSection';
 
-import { mockCategories, mockSummary } from '../api/mock';
+import { mockSummary } from '../api/mock';
 import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
 import { api } from '../api/client';
-
+import { GoalCategory } from "../types";
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
-export default function HomeScreen({ navigation,route }: Props) {
+export default function HomeScreen({ navigation }: Props) {
     const [username, setUsername] = useState('');
     const [currentLevel, setCurrentLevel] = useState<number | null>(null);
     const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
+
     const [refreshing, setRefreshing] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [characterImageUrl, setCharacterImageUrl] = useState<string | undefined>();
+    const [characterImageUrl, setCharacterImageUrl] = useState<string>();
 
     const [completedDates, setCompletedDates] = useState<string[]>([]);
     const [preferredEmoji, setPreferredEmoji] = useState('🌱');
 
-    const [motto, setMotto] = useState('');
+    const [categories, setCategories] = useState<GoalCategory[]>([]);
+    const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null);
 
     const today = new Date();
-
     const [year, setYear] = useState(today.getFullYear());
     const [month, setMonth] = useState(today.getMonth() + 1);
 
-    //사용자가 누른 날짜 강조 표시
     const [selectedDate, setSelectedDate] = useState(
         `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     );
-
+    const selectedCategory = categories.find(c => c.id === selectedGoalId);
     const [menuVisible, setMenuVisible] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const loadData = async () => {
         try {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
-            const savedGoalPlanId = await AsyncStorage.getItem(STORAGE_KEYS.GOAL_PLAN_ID);
             const savedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
 
             if (savedUsername) setUsername(savedUsername);
-            if (savedGoalPlanId) {
-                const goalId = Number(savedGoalPlanId);
+            if (!savedUserId) return;
 
-                setGoalPlanId(goalId);
+            const uid = Number(savedUserId);
 
-                const res = await api.get(`/goals/${goalId}`);
+            const goalRes = await api.get(`/goals/users/${uid}`);
 
-                setMotto(res.data.motto ?? '');
+            const getPastelColor = () => {
+                const h = Math.floor(Math.random() * 360);
+                const s = 55;
+                const l = 80;
+                return `hsl(${h}, ${s}%, ${l}%)`;
+            };
+
+            const mapped = goalRes.data
+                .sort((a: any, b: any) => b.id - a.id)
+                .map((goal: any) => ({
+                    id: goal.id,
+                    name: goal.title,
+                    emoji: goal.emoji,
+                    active: goal.active,
+                    motto: goal.motto,
+                    colorHex: getPastelColor(),
+                }));
+
+            setCategories(mapped);
+
+            if (!goalPlanId) {
+                const first = mapped[0];
+                if (first) {
+                    setSelectedGoalId(first.id);
+                    setGoalPlanId(first.id);
+                }
             }
 
             if (savedUserId) {
@@ -77,58 +100,58 @@ export default function HomeScreen({ navigation,route }: Props) {
                 setUserId(savedUserId);
             }
         } catch (e) {
-            console.log('loadData error:', e);
+            console.log(e);
         }
     };
 
     useFocusEffect(
         useCallback(() => {
-            loadData();
+            loadInitial();
         }, [])
     );
 
+    // ✅ goalPlanId 바뀔 때만 필요한 데이터 fetch
     useEffect(() => {
-        const fetchCalendar = async () => {
-            try {
-                if (!goalPlanId) return;
+        if (!goalPlanId) return;
 
-                const res = await api.get(`/goal-plans/${goalPlanId}/calendar`, {
-                    params: {
-                        year,
-                        month,
-                    },
-                });
-
-                setCompletedDates(res.data.completedDates ?? []);
-                setPreferredEmoji(res.data.preferredEmoji ?? '🌱');
-
-            } catch (e) {
-                console.log('달력 조회 실패:', e);
-                setCompletedDates([]);
-                setPreferredEmoji('🌱');
-            }
-        };
-
+        fetchCharacter();
         fetchCalendar();
+
     }, [goalPlanId, year, month, refreshKey]);
 
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadData();
-        setRefreshKey((prev) => prev + 1);
-        setRefreshing(false);
-    };
-
-    const fetchCharacter = async (uid: number) => {
+    const fetchCharacter = async () => {
         try {
-            if (!uid) return;
-
-            const res = await api.get(`/characters/current?userId=${uid}`);
+            const res = await api.get(`/characters/current?goalPlanId=${goalPlanId}`);
             setCharacterImageUrl(res.data.imageUrl);
             setCurrentLevel(res.data.level);
         } catch (e) {
             console.log(e);
         }
+    };
+
+    const fetchCalendar = async () => {
+        try {
+            const res = await api.get(`/goal-plans/${goalPlanId}/calendar`, {
+                params: { year, month },
+            });
+
+            setCompletedDates(res.data.completedDates ?? []);
+            setPreferredEmoji(res.data.preferredEmoji ?? '🌱');
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const handleSelectCategory = (goalId: number) => {
+        setSelectedGoalId(goalId);
+        setGoalPlanId(goalId);
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadInitial();
+        setRefreshKey(prev => prev + 1);
+        setRefreshing(false);
     };
 
     const goPrevMonth = () => {
@@ -157,6 +180,7 @@ export default function HomeScreen({ navigation,route }: Props) {
         setMonth(now.getMonth() + 1);
         setSelectedDate(todayKey);
     };
+
     const handleCategoryCreate = () => {
         setMenuVisible(false);
         navigation.navigate('CategoryCreate');
@@ -190,8 +214,9 @@ export default function HomeScreen({ navigation,route }: Props) {
                 <View style={styles.headerRow}>
                     <View style={styles.headerTextBox}>
                         <Text style={styles.title}>
-                            {username ? `${username}님, ${motto || '오늘도 한 칸 전진'}`
-                                : motto || '오늘도 한 칸 전진'}
+                            {username
+                                ? `${username}님, ${selectedCategory?.motto || '오늘도 한 칸 전진'}`
+                                : selectedCategory?.motto || '오늘도 한 칸 전진'}
                         </Text>
                         <Text style={styles.subtitle}>
                             {mockSummary.streak}일째 루틴 이어가는 중
@@ -206,13 +231,14 @@ export default function HomeScreen({ navigation,route }: Props) {
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.chipRow}
-                >
-                    {mockCategories.map((category) => (
-                        <CategoryChip key={category.id} category={category} />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                    {categories.map((category) => (
+                        <CategoryChip
+                            key={category.id}
+                            category={category}
+                            isSelected={category.id === selectedGoalId}
+                            onPress={() => handleSelectCategory(category.id)}
+                        />
                     ))}
                 </ScrollView>
 
@@ -236,10 +262,12 @@ export default function HomeScreen({ navigation,route }: Props) {
                 {goalPlanId && (
                     <DailyTaskSection
                         goalPlanId={goalPlanId}
+                        selectedDate={selectedDate}
                         onLevelChange={setCurrentLevel}
                         refreshKey={refreshKey}
                         onLevelUp={fetchCharacter}
-                        onTasksUpdated={() => setRefreshKey((prev) => prev + 1)}
+                        isActive={selectedCategory?.active ?? false}
+                        onTasksUpdated={() => setRefreshKey(prev => prev + 1)}
                     />
                 )}
             </ScrollView>
@@ -286,66 +314,13 @@ export default function HomeScreen({ navigation,route }: Props) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    content: {
-        paddingHorizontal: 20,
-        paddingTop: 64,
-        paddingBottom: 120,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    headerTextBox: {
-        flex: 1,
-        paddingRight: 12,
-    },
-    title: {
-        color: colors.text,
-        fontSize: 28,
-        fontWeight: '900',
-    },
-    subtitle: {
-        color: colors.muted,
-        marginTop: 6,
-        fontSize: 15,
-    },
-    chipRow: {
-        marginTop: 18,
-    },
-    level: {
-        color: colors.text,
-        fontSize: 18,
-        fontWeight: '700',
-        marginTop: 14,
-        marginBottom: 12,
-    },
-    calendarHeaderRow: {
-        marginTop: 16,
-        marginBottom: 8,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    monthButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dropdownOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.35)',
-    },
-    modalBackdrop: {
-        flex: 1,
-    },
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { paddingHorizontal: 20, paddingTop: 64, paddingBottom: 120 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    headerTextBox: { flex: 1 },
+    title: { color: colors.text, fontSize: 28, fontWeight: '900' },
+    subtitle: { color: colors.muted, marginTop: 6 },
+    chipRow: { marginTop: 18, paddingLeft: 5,},
     menuButton: {
         width: 42,
         height: 42,
@@ -353,8 +328,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#1E1E22',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 2,
     },
+    dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
     dropdownWrapper: {
         position: 'absolute',
         top: 105,

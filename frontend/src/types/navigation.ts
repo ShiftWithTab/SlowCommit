@@ -13,4 +13,5 @@ export type MainTabParamList = {
     Home: { userId: number };
     Stats: { userId: number };
     Settings: { userId: number };
+    CategoryCreate: undefined;
 };
