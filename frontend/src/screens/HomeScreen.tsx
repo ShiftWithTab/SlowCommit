@@ -53,9 +53,8 @@ export default function HomeScreen({ navigation }: Props) {
     );
     const selectedCategory = categories.find(c => c.id === selectedGoalId);
     const [menuVisible, setMenuVisible] = useState(false);
-
-    // ✅ 최초 데이터 (카테고리 + 유저)
-    const loadInitial = async () => {
+    const [userId, setUserId] = useState<string | null>(null);
+    const loadData = async () => {
         try {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
             const savedUserId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID);
@@ -95,6 +94,11 @@ export default function HomeScreen({ navigation }: Props) {
                 }
             }
 
+            if (savedUserId) {
+                const uid = Number(savedUserId);
+                await fetchCharacter(uid);
+                setUserId(savedUserId);
+            }
         } catch (e) {
             console.log(e);
         }
@@ -193,7 +197,11 @@ export default function HomeScreen({ navigation }: Props) {
         console.log('리마인더 관리');
         // navigation.navigate('ReminderManage');
     };
-
+    const handleRoutineManage = () => {
+        setMenuVisible(false);
+        if (!userId) return;
+        navigation.navigate('RoutineManage', { userId });
+    };
     return (
         <>
             <ScrollView
@@ -292,6 +300,10 @@ export default function HomeScreen({ navigation }: Props) {
                             <TouchableOpacity style={styles.menuItem} onPress={handleReminderManage}>
                                 <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
                                 <Text style={styles.menuItemText}>리마인더 관리</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.menuItem} onPress={handleRoutineManage}>
+                                <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
+                                <Text style={styles.menuItemText}>루틴 관리</Text>
                             </TouchableOpacity>
                         </Pressable>
                     </View>

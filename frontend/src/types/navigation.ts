@@ -5,6 +5,8 @@ export type RootStackParamList = {
     GoalSetup: { userId: number };
     MainTabs: { userId: number };
     CategoryCreate: undefined;
+    RoutineManage: { userId: number };
+    RoutineCreate: { goalId: number };
 };
 
 export type MainTabParamList = {
