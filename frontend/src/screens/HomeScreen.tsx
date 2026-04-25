@@ -95,8 +95,6 @@ export default function HomeScreen({ navigation }: Props) {
             }
 
             if (savedUserId) {
-                const uid = Number(savedUserId);
-                await fetchCharacter(uid);
                 setUserId(savedUserId);
             }
         } catch (e) {
@@ -106,7 +104,7 @@ export default function HomeScreen({ navigation }: Props) {
 
     useFocusEffect(
         useCallback(() => {
-            loadInitial();
+            loadData();
         }, [])
     );
 
@@ -121,6 +119,7 @@ export default function HomeScreen({ navigation }: Props) {
 
     const fetchCharacter = async () => {
         try {
+            if (!goalPlanId) return;
             const res = await api.get(`/characters/current?goalPlanId=${goalPlanId}`);
             setCharacterImageUrl(res.data.imageUrl);
             setCurrentLevel(res.data.level);
@@ -149,7 +148,7 @@ export default function HomeScreen({ navigation }: Props) {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await loadInitial();
+        await loadData();
         setRefreshKey(prev => prev + 1);
         setRefreshing(false);
     };

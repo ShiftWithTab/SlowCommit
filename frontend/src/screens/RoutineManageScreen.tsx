@@ -53,6 +53,8 @@ function stringToColor(str: string) {
 export default function RoutineManageScreen({ route, navigation }: Props) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [routinesMap, setRoutinesMap] = useState<Record<string, any[]>>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -64,7 +66,7 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
                     return;
                 }
 
-                const res = await api.get<GoalResponse[]>(`/goals/users/${userId}`);
+                const res = await api.get<GoalResponse[]>(`/goals/users/${userId}/active`);
 
                 const data = res.data;
 
@@ -84,9 +86,48 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
         fetchData();
     }, [route.params]);
 
-
     const handlePressCategory = (category: Category) => {
         navigation.navigate('RoutineCreate', { goalId: category.id });
+    };
+
+    const fetchRoutines = async (goalId: string) => {
+        try {
+            const res = await api.get(`/routines`, {
+                params: { goalPlanId: goalId }
+            });
+
+            setRoutinesMap((prev) => ({
+                ...prev,
+                [goalId]: res.data,
+            }));
+        } catch (e) {
+            console.error('루틴 조회 실패', e);
+        }
+    };
+
+    const toggleExpand = async (goalId: string) => {
+        if (expandedId === goalId) {
+            setExpandedId(null);
+        } else {
+            setExpandedId(goalId);
+
+            if (!routinesMap[goalId]) {
+                await fetchRoutines(goalId);
+            }
+        }
+    };
+
+    const deleteRoutine = async (routineId: number, goalId: string) => {
+        try {
+            await api.delete(`/routines/${routineId}`);
+
+            setRoutinesMap((prev) => ({
+                ...prev,
+                [goalId]: prev[goalId].filter((r) => r.id !== routineId),
+            }));
+        } catch (e) {
+            console.error('루틴 삭제 실패', e);
+        }
     };
 
     if (loading) {
@@ -113,25 +154,55 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
                 카테고리를 선택하여 해당 카테고리의 루틴을 추가할 수 있습니다.
             </Text>
 
-            <View style={styles.categoryList}>
-                {categories.map((category) => {
-                    const color = stringToColor(category.name);
+            {categories.map((category) => {
+                const isExpanded = expandedId === category.id;
+                const color = stringToColor(category.name);
 
-                    return (
+                return (
+                    <View key={category.id} style={styles.card}>
+                        {/* 🔽 헤더 */}
                         <TouchableOpacity
-                            key={category.id}
-                            style={styles.categoryButton}
-                            onPress={() => handlePressCategory(category)}
+                            style={[styles.categoryButton, { color }]}
+                            onPress={() => toggleExpand(category.id)}
                         >
                             <Text style={[styles.categoryText, { color }]}>
                                 {category.name}
                             </Text>
 
-                            <Ionicons name="add-circle-outline" size={30} color="#fff" />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                <Ionicons name="add-circle-outline" size={26} color="#fff"
+                                          onPress={() =>
+                                              navigation.navigate('RoutineCreate', { goalId: category.id })
+                                          }
+                                />
+
+                                <Text style={styles.arrow}>
+                                    {isExpanded ? '▲' : '▼'}
+                                </Text>
+                            </View>
                         </TouchableOpacity>
-                    );
-                })}
-            </View>
+
+                        {/* 🔽 펼쳐진 루틴 리스트 */}
+                        {isExpanded && (
+                            <View style={styles.routineBox}>
+                                {(routinesMap[category.id] || []).map((routine) => (
+                                    <View key={routine.id} style={styles.routineRow}>
+                                        <Text style={styles.routineText}>
+                                            {routine.title}
+                                        </Text>
+
+                                        <TouchableOpacity
+                                            onPress={() => deleteRoutine(routine.id, category.id)}
+                                        >
+                                            <Text style={styles.deleteBtn}>삭제</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+                );
+            })}
         </ScrollView>
     );
 }
@@ -214,5 +285,41 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '500',
         marginTop: -2,
+    },
+    card: {
+        borderRadius: 18,
+        backgroundColor: '#17171B',
+        borderWidth: 1,
+        borderColor: '#25252B',
+        overflow: 'hidden',
+    },
+
+    arrow: {
+        color: '#8B8B94',
+        fontSize: 12,
+    },
+
+    routineBox: {
+        borderTopWidth: 1,
+        borderTopColor: '#25252B',
+        padding: 12,
+        gap: 8,
+    },
+
+    routineRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+
+    routineText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+
+    deleteBtn: {
+        color: '#FF5F5F',
+        fontSize: 13,
+        fontWeight: '700',
     },
 });
