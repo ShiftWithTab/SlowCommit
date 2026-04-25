@@ -9,6 +9,8 @@ import StatsScreen from '../screens/StatsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import CategoryCreateScreen from '../screens/CategoryCreateScreen';
+import RoutineManageScreen from '../screens/RoutineManageScreen';
+import RoutineCreateScreen from "../screens/RoutineCreateScreen";
 
 import { RootStackParamList, MainTabParamList } from '../types/navigation';
 
@@ -76,6 +78,8 @@ export default function RootNavigator() {
             <Stack.Screen name="GoalSetup" component={GoalSetupScreen} />
             <Stack.Screen name="MainTabs" component={MainTabs} />
             <Stack.Screen name="CategoryCreate" component={CategoryCreateScreen}/>
+            <Stack.Screen name="RoutineManage" component={RoutineManageScreen}/>
+            <Stack.Screen name="RoutineCreate" component={RoutineCreateScreen}/>
         </Stack.Navigator>
     );
 }
