@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import { api } from '../api/client';
 import TaskSection from './TaskSection';
 import type { Task } from '../types';
 import Toast from 'react-native-toast-message';
 import LevelUpEffect from '../components/LevelUpEffect';
 import TaskInputModal from '../components/TaskInputModal';
-
 export default function DailyTaskSection({
                                              goalPlanId,
                                              selectedDate,

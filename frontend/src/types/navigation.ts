@@ -7,6 +7,7 @@ export type RootStackParamList = {
     CategoryCreate: undefined;
     RoutineManage: { userId: number };
     RoutineCreate: { goalId: number };
+    ReminderManage: { userId: number };
 };
 
 export type MainTabParamList = {
@@ -14,4 +15,6 @@ export type MainTabParamList = {
     Stats: { userId: number };
     Settings: { userId: number };
     CategoryCreate: undefined;
+    GoalManage: undefined;
+
 };

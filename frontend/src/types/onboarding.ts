@@ -31,7 +31,6 @@ export type SetupRequest = {
     characterName : string;
     startDate: string;
     endDate: string;
-    alarmCycle: number;
     preferredEmoji: string;
 };
 

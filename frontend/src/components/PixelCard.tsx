@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View, Image } from 'react-native';
-import { colors } from '../theme/colors';
 import { CONFIG } from '../constants/config';
-
+import { useTheme } from '../theme/ThemeContext';
 export default function PixelCard({
                                     message,
                                     avatarUrl,
@@ -9,8 +8,10 @@ export default function PixelCard({
   message: string;
   avatarUrl?: string;
 }) {
+  const theme = useTheme();
+
   return (
-      <View style={styles.wrapper}>
+      <View style={[styles.wrapper,{ backgroundColor: theme.background, borderColor : theme.border }]}>
         {avatarUrl ? (
             <Image
                 source={{
@@ -21,12 +22,15 @@ export default function PixelCard({
                 style={styles.avatarImage}
             />
         ) : (
-            <Text style={styles.fallback}>🧑‍💼</Text>
+            // <Text style={[styles.fallback,{color : theme.text, opacity: theme.isDark ? 0.9 : 0.85}]}>🧑‍💼</Text>
+              <Text style={[styles.message, { color: theme.text }]}>
+                🧑
+              </Text>
         )}
 
 
-        <View style={styles.bubble}>
-          <Text style={styles.message}>{message}</Text>
+        <View style={[styles.bubble, { backgroundColor: theme.card }]}>
+          <Text style={[styles.message, { color: theme.text }]}>{message}</Text>
         </View>
       </View>
   );
@@ -35,14 +39,14 @@ export default function PixelCard({
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: 18,
-    backgroundColor: colors.surface,
+    // backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: colors.border
+    // borderColor: colors.border
   },
   avatar: {
     fontSize: 64,
@@ -50,7 +54,7 @@ const styles = StyleSheet.create({
   },
   bubble: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    // backgroundColor: '#ffffff',
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 14
@@ -58,7 +62,7 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#222'
+    // color: '#222'
   },
   avatarImage: {
     width: 64,

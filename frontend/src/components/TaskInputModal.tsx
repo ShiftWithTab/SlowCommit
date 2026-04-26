@@ -8,7 +8,7 @@ import {
     Alert
 } from 'react-native';
 import { useState, useEffect } from 'react';
-import { colors } from '../theme/colors';
+import { useTheme } from "../theme/ThemeContext";
 
 export default function TaskInputModal({
                                            visible,
@@ -25,6 +25,7 @@ export default function TaskInputModal({
     initialValue?: string;
     title?: string;
 }) {
+    const theme = useTheme();
     const [text, setText] = useState('');
 
     useEffect(() => {
@@ -43,9 +44,17 @@ export default function TaskInputModal({
     return (
         <Modal transparent visible={visible} animationType="fade" statusBarTranslucent>
             <View style={styles.overlay}>
-                <View style={styles.container}>
+                <View
+                    style={[
+                        styles.container,
+                        {
+                            backgroundColor: theme.card,
+                            borderColor: theme.border,
+                        },
+                    ]}
+                >
                     <View style={styles.header}>
-                        <Text style={styles.title}>{title}</Text>
+                        <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
 
                         {onDelete && (
                             <Pressable
@@ -71,27 +80,33 @@ export default function TaskInputModal({
                                     );
                                 }}
                             >
-                                <Text style={styles.deleteText}>삭제</Text>
+                                <Text style={[styles.deleteText, { color: '#FF6B6B' }]}>삭제</Text>
                             </Pressable>
                         )}
                     </View>
 
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input,
+                            {
+                                backgroundColor: theme.background,
+                                color: theme.text,
+                                borderColor: theme.border,
+                            },]}
                         value={text}
                         onChangeText={setText}
                         autoFocus
                         placeholder="내용을 입력하세요"
+                        placeholderTextColor={theme.text + '80'}
                         onSubmitEditing={handleSubmit}
                     />
 
                     <View style={styles.buttonRow}>
                         <Pressable onPress={onClose}>
-                            <Text style={styles.cancel}>취소</Text>
+                            <Text style={[styles.cancel, { color: theme.text, opacity: 0.6 }]}>취소</Text>
                         </Pressable>
 
                         <Pressable onPress={handleSubmit}>
-                            <Text style={styles.submit}>저장</Text>
+                            <Text style={[styles.submit, { color: theme.primary }]}>저장</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -113,11 +128,9 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     container: {
-        backgroundColor: colors.surface,
         borderRadius: 20,
         padding: 20,
         borderWidth: 1,
-        borderColor: colors.border,
     },
     header: {
         flexDirection: 'row',
@@ -126,20 +139,15 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     title: {
-        color: colors.text,
         fontSize: 18,
         fontWeight: '700',
     },
     input: {
-        backgroundColor: colors.background,
-        color: colors.text,
-
         borderRadius: 12,
         padding: 12,
         marginBottom: 16,
 
         borderWidth: 1,
-        borderColor: colors.border,
     },
     buttonRow: {
         flexDirection: 'row',
@@ -147,14 +155,11 @@ const styles = StyleSheet.create({
     },
     cancel: {
         marginRight: 20,
-        color: colors.muted,
     },
     submit: {
-        color: colors.submit,
         fontWeight: '600',
     },
     deleteText: {
-        color: colors.delete,
         fontSize: 12,
         fontWeight: '500',
         opacity: 0.7,

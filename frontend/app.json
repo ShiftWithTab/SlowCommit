@@ -4,7 +4,7 @@
     "slug": "focus-pixel",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -12,6 +12,11 @@
       "expo-asset",
       "expo-font",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4f32df79-25d6-46cd-b4ac-d9fac8e56071"
+      }
+    }
   }
 }

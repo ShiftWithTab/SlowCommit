@@ -16,6 +16,8 @@ import { RootStackParamList, MainTabParamList } from '../types/navigation';
 
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import GoalManageScreen from "../screens/GoalManageScreen";
+import ReminderManageScreen from "../screens/ReminderManageScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -80,6 +82,8 @@ export default function RootNavigator() {
             <Stack.Screen name="CategoryCreate" component={CategoryCreateScreen}/>
             <Stack.Screen name="RoutineManage" component={RoutineManageScreen}/>
             <Stack.Screen name="RoutineCreate" component={RoutineCreateScreen}/>
+            <Stack.Screen name="GoalManage"component={GoalManageScreen}/>
+            <Stack.Screen name="ReminderManage" component={ReminderManageScreen}/>
         </Stack.Navigator>
     );
 }
