@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.example.focusapp.dto.RoutinePushTarget;
-
+import java.time.LocalTime;
 public interface RoutineRepository extends JpaRepository<Routine, Long> {
     List<Routine> findByGoalPlanId(Long goalPlanId);
     List<Routine> findByGoalPlanIdAndDeletedAtIsNull(Long goalPlanId);
@@ -30,5 +30,5 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
       AND t.active = true
       AND g.status = com.example.focusapp.entity.GoalStatus.ACTIVE
 """)
-    List<RoutinePushTarget> findRoutinePushTargets(@Param("nowTime") String nowTime);
+    List<RoutinePushTarget> findRoutinePushTargets(@Param("nowTime") LocalTime nowTime);
 }

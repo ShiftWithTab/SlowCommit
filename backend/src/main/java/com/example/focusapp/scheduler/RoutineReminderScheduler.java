@@ -24,7 +24,7 @@ public class RoutineReminderScheduler {
 
     @Scheduled(cron = "0 * * * * *")
     public void sendRoutineReminders() {
-        String nowTime = LocalTime.now().format(TIME_FORMATTER);
+        LocalTime nowTime = LocalTime.now().withSecond(0).withNano(0);
         LocalDate today = LocalDate.now();
 
         List<RoutinePushTarget> targets =

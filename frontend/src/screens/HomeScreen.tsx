@@ -58,6 +58,7 @@ export default function HomeScreen({ navigation, route }: Props) {
 
             const tokenData = await Notifications.getExpoPushTokenAsync({projectId: Constants.expoConfig?.extra?.eas?.projectId,});
             const pushToken = tokenData.data;
+            console.log('pushToken:', pushToken);
 
             await api.post('/push-tokens', {
                 userId,

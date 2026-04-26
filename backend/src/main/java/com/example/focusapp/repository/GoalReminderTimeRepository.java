@@ -25,14 +25,14 @@ public interface GoalReminderTimeRepository extends JpaRepository<GoalReminderTi
         )
         FROM GoalReminderTime r
         JOIN GoalPlan g ON r.goalPlanId = g.id
-        JOIN g.user u
-        JOIN g.goalDefinition d
-        JOIN g.goalConfig c
+        JOIN User u ON g.user.id = u.id
+        JOIN GoalDefinition d ON g.goalDefinition.id = d.id
+        JOIN GoalConfig c ON g.id = c.goalPlan.id
         JOIN UserPushToken t ON t.userId = u.id
-        WHERE r.reminderTime = :nowTime
-          AND r.active = true
-          AND t.active = true
-          AND g.status = com.example.focusapp.entity.GoalStatus.ACTIVE
+       WHERE r.reminderTime = :nowTime
+         AND r.active = true
+         AND t.active = true
+         AND g.status = com.example.focusapp.entity.GoalStatus.ACTIVE
     """)
     List<ReminderPushTarget> findPushTargets(@Param("nowTime") String nowTime);
 

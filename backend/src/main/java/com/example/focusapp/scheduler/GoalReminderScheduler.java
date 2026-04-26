@@ -1,3 +1,5 @@
+package com.example.focusapp.scheduler;
+
 import com.example.focusapp.dto.ReminderPushTarget;
 import com.example.focusapp.repository.GoalReminderTimeRepository;
 import com.example.focusapp.service.ExpoPushService;
@@ -16,15 +18,15 @@ public class GoalReminderScheduler {
     private final GoalReminderTimeRepository reminderRepository;
     private final ExpoPushService expoPushService;
 
-    private static final DateTimeFormatter TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("HH:mm");
 
     @Scheduled(cron = "0 * * * * *")
     public void sendReminderPushes() {
-        String nowTime = LocalTime.now().format(TIME_FORMATTER);
+        String nowTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
 
         List<ReminderPushTarget> targets =
                 reminderRepository.findPushTargets(nowTime);
+
+        System.out.println("GOAL 푸시 대상 수 = " + targets.size());
 
         for (ReminderPushTarget target : targets) {
             expoPushService.sendGoalReminder(target);
