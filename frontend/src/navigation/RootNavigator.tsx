@@ -18,27 +18,44 @@ import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import GoalManageScreen from "../screens/GoalManageScreen";
 import ReminderManageScreen from "../screens/ReminderManageScreen";
+import { useTheme } from '../theme/ThemeContext';
+
+import Feather from '@expo/vector-icons/Feather';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs({ route }: any) {
     const { userId } = route.params;
+    const theme  = useTheme();
+
 
     return (
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
                 tabBarStyle: {
-                    backgroundColor: '#0d0d0d',
-                    borderTopColor: '#1e1e1e',
-                    height: 70,
-                    paddingBottom: 10,
-                    paddingTop: 8,
+                    position: 'absolute',
+                    left: 20,
+                    right: 20,
+                    bottom: 20,
+                    height: 68,
+                    borderRadius: 24,
+                    backgroundColor: theme.card,
                     borderTopWidth: 0,
+
+                    paddingBottom: 8,
+                    paddingTop: 8,
+
+                    elevation: 0,
                 },
-                tabBarActiveTintColor: '#d8c2ff',
-                tabBarInactiveTintColor: '#8b8b8b',
+
+                tabBarActiveTintColor: theme.primary,
+
+                tabBarInactiveTintColor: theme.isDark
+                    ? 'rgba(255,255,255,0.45)'
+                    : 'rgba(0,0,0,0.45)',
+
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: '700',
@@ -49,16 +66,42 @@ function MainTabs({ route }: any) {
                 name="Home"
                 component={HomeScreen}
                 initialParams={{ userId }}
+                options={{
+                    tabBarLabel: 'Calendar',
+                    tabBarIcon: ({ size, color}) => (
+                        <Feather
+                            name="calendar"
+                            size={size}
+                            color={color}
+                        />
+                    ),
+                }}
             />
             <Tab.Screen
                 name="Stats"
                 component={StatsScreen}
                 initialParams={{ userId }}
+                options={{
+                    tabBarLabel: 'Stats',
+                    tabBarIcon: ({ size, color}) => (
+                        <Feather name="heart"
+                                     size={size}
+                                     color={color} />
+                    ),
+                }}
             />
             <Tab.Screen
                 name="Settings"
                 component={SettingsScreen}
                 initialParams={{ userId }}
+                options={{
+                    tabBarLabel: 'Settings',
+                    tabBarIcon: ({ size, color}) => (
+                        <Feather name="settings"
+                                 size={size}
+                                 color={color} />
+                    ),
+                }}
             />
         </Tab.Navigator>
     );

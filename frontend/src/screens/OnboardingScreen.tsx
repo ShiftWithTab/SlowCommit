@@ -65,7 +65,7 @@ export default function OnboardingScreen() {
         return date.toISOString().slice(0, 10);
     };
     const [preferredEmoji, setPreferredEmoji] = useState('🌱');
-    const [characterName, setCharacterName] = useState('');
+    // const [characterName, setCharacterName] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -95,7 +95,8 @@ export default function OnboardingScreen() {
     const canGoEmoji = showCustomEmojiInput
         ? customEmojiInput.trim() !== ''
         : preferredEmoji.trim() !== '';
-    const canComplete = characterName.trim() !== '' && characterId !== null;
+    // const canComplete = characterName.trim() !== '' && characterId !== null;
+    const canComplete = characterId !== null;
 
     const goNext = () =>
         setStep((prev) => {
@@ -218,7 +219,7 @@ export default function OnboardingScreen() {
                 goalTitle: goalTitle.trim(),
                 motto: motto.trim(),
                 characterId,
-                characterName: characterName.trim(),
+                characterName: '',
                 startDate: new Date().toISOString().slice(0, 10),
                 endDate: deadline,
                 preferredEmoji,
@@ -273,7 +274,7 @@ export default function OnboardingScreen() {
                             <View style={styles.startInfoCard}>
                                 <Text style={styles.startInfoTitle}>온보딩에서 정할 것</Text>
                                 <Text style={styles.startInfoText}>
-                                    별명 · 목표 이름 · 모토 · 마감일 · 목표 주기 · 이모지 · 캐릭터 이름
+                                    별명 · 목표 이름 · 모토 · 마감일 ·  이모지 · 캐릭터
                                 </Text>
                             </View>
                         </View>
@@ -487,8 +488,8 @@ export default function OnboardingScreen() {
                         stepText={progressText}
                         progressWidth={progressWidth}
                         onBack={goPrev}
-                        title="캐릭터 이름을 정해주세요"
-                        subtitle="이 친구가 앞으로 네 목표를 같이 키워줄 거예요."
+                        title="캐릭터를 선택해주세요"
+                        subtitle="함께 성장할 캐릭터를 골라보세요."
                         footer={
                             <PrimaryButton
                                 label="완료하기"
@@ -519,12 +520,12 @@ export default function OnboardingScreen() {
                             })}
                         </View>
 
-                        <FloatingField
-                            label="캐릭터 이름"
-                            value={characterName}
-                            onChangeText={setCharacterName}
-                            placeholder="예: 꾸미"
-                        />
+                        {/*<FloatingField*/}
+                        {/*    label="캐릭터 이름"*/}
+                        {/*    value={characterName}*/}
+                        {/*    onChangeText={setCharacterName}*/}
+                        {/*    placeholder="예: 꾸미"*/}
+                        {/*/>*/}
                     </StepLayout>
                 ) : null}
             </View>

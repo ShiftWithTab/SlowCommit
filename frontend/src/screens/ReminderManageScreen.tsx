@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+
 import { api } from '../api/client';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -436,7 +438,7 @@ export default function ReminderManageScreen({ route, navigation }: any) {
                                                 ]}
                                                 onPress={() => deleteReminder(goal.id, reminder.id)}
                                             >
-                                                <Ionicons name="trash-outline" size={17} color="#FF5F5F" />
+                                                <Feather name="trash-2" size={17} color="#FF5F5F" />
                                             </TouchableOpacity>
                                         </View>
                                     </View>

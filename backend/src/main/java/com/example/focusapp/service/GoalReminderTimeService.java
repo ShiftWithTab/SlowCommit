@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
 
 @Service
 public class GoalReminderTimeService {
@@ -37,6 +38,7 @@ public class GoalReminderTimeService {
         GoalReminderTime reminder = new GoalReminderTime();
         reminder.setGoalPlanId(request.getGoalPlanId());
         reminder.setReminderTime(request.getReminderTime());
+        reminder.setNextTargetDate(LocalDate.now());
         reminder.setActive(true);
 
         GoalReminderTime saved = repository.save(reminder);

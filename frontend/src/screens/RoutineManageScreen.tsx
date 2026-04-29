@@ -8,9 +8,12 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+
 import {RootStackParamList} from "../types/navigation";
 import { useTheme } from '../theme/ThemeContext';
 type Category = {
@@ -224,7 +227,7 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
                                         navigation.navigate('RoutineCreate', { goalId: Number(category.id) })
                                     }
                                 >
-                                    <Ionicons name="add" size={18} />
+                                    <Ionicons name="add" size={18} color={theme.text} />
                                 </TouchableOpacity>
 
                                 <View
@@ -283,7 +286,7 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
                                                 ]}
                                                 onPress={() => deleteRoutine(routine.id, category.id)}
                                             >
-                                                <Ionicons name="trash-outline" size={17} color="#FF5F5F" />
+                                                <Feather name="trash-2" size={17} color="#FF5F5F" />
                                             </TouchableOpacity>
                                         </View>
                                     ))

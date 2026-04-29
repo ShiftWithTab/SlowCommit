@@ -15,6 +15,8 @@ import { api } from '../api/client';
 import {Ionicons} from "@expo/vector-icons";
 import { Calendar } from 'react-native-calendars';
 import {useTheme} from "../theme/ThemeContext";
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 type Props = NativeStackScreenProps<RootStackParamList, 'RoutineCreate'>;
 
 export default function RoutineCreateScreen({ route, navigation }: Props) {
@@ -110,9 +112,29 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
         }
     };
     const [showTimeOptions, setShowTimeOptions] = useState(false);
-    const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
-    const [hour, setHour] = useState(8);
-    const [minute, setMinute] = useState(0);
+
+    const [selectedTime, setSelectedTime] = useState(new Date());
+
+    const getFormattedTime = (): string | null => {
+        if (time === '없음') return null;
+
+        const h = selectedTime.getHours();
+        const m = selectedTime.getMinutes();
+
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+    };
+
+    const parseInterval = (cycle: string): number | null => {
+        if (cycle === '매일') return 1;
+        if (cycle === '일주일마다') return 7;
+        if (cycle === '매월') return 30;
+        if (cycle === '매년') return 365;
+
+        const match = cycle.match(/(\d+)일마다/);
+        if (match) return Number(match[1]);
+
+        return 1;
+    };
 
     const handleCreateRoutine = async () => {
         if (!title.trim()) {
@@ -154,29 +176,6 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
         } finally {
             setLoading(false);
         }
-    };
-
-    const getFormattedTime = (): string | null => {
-        if (time === '없음') return null;
-
-        let h = hour;
-
-        if (ampm === 'PM' && hour < 12) h += 12;
-        if (ampm === 'AM' && hour === 12) h = 0;
-
-        return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-    };
-
-    const parseInterval = (cycle: string): number | null => {
-        if (cycle === '매일') return 1;
-        if (cycle === '일주일마다') return 7;
-        if (cycle === '매월') return 30;
-        if (cycle === '매년') return 365;
-
-        const match = cycle.match(/(\d+)일마다/);
-        if (match) return Number(match[1]);
-
-        return 1;
     };
 
     return (
@@ -376,118 +375,30 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
                 </TouchableOpacity>
             </View>
             {showTimeOptions && (
-                <View style={[
-                    styles.timeBox,
-                    { backgroundColor: theme.card, borderColor: theme.border }
-                ]}>
-                    <Text style={[styles.timeSectionTitle, { color: theme.text, opacity: 0.6 }]}>오전 / 오후</Text>
-                    <View style={styles.timeButtonRow}>
-                        {[
-                            { label: '오전', value: 'AM' },
-                            { label: '오후', value: 'PM' },
-                        ].map((item) => {
-                            const selected = ampm === item.value;
+                <View
+                    style={[
+                        styles.timeBox,
+                        {
+                            backgroundColor: theme.card,
+                            borderColor: theme.border,
+                        },
+                    ]}
+                >
+                    <DateTimePicker
+                        value={selectedTime}
+                        mode="time"
+                        display="spinner"
+                        onChange={(event, date) => {
+                            if (!date) return;
 
-                            return (
-                                <TouchableOpacity
-                                    key={item.value}
-                                    style={[
-                                        styles.timeChip,
-                                        {
-                                            backgroundColor: selected ? theme.primary : theme.background,
-                                            borderColor: selected ? theme.primary : theme.border,
-                                        },
-                                    ]}
-                                    onPress={() => {
-                                        const nextAmpm = item.value as 'AM' | 'PM';
-                                        setAmpm(nextAmpm);
-                                        setTime(`${item.label} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.timeChipText,
-                                            selected && {
-                                                color: theme.isDark ? '#1D3A29' : '#FFFFFF',
-                                            },
-                                        ]}
-                                    >
-                                        {item.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                            setSelectedTime(date);
 
-                    <Text style={[styles.timeSectionTitle, { color: theme.text, opacity: 0.6 }]}>시</Text>
-                    <View style={styles.timeGrid}>
-                        {Array.from({ length: 12 }, (_, i) => i+1).map((item) => {
-                            const selected = hour === item;
+                            const hh = String(date.getHours()).padStart(2, '0');
+                            const mm = String(date.getMinutes()).padStart(2, '0');
 
-                            return (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={[
-                                        styles.timeChip,
-                                        {
-                                            backgroundColor: selected ? theme.primary : theme.background,
-                                            borderColor: selected ? theme.primary : theme.border,
-                                        },
-                                    ]}
-                                    onPress={() => {
-                                        setHour(item);
-                                        setTime(`${ampm === 'AM' ? '오전' : '오후'} ${String(item).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.timeChipText,
-                                            selected && {
-                                                color: theme.isDark ? '#1D3A29' : '#FFFFFF',
-                                            },
-                                        ]}
-                                    >
-                                        {String(item).padStart(2, '0')}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    <Text style={[styles.timeSectionTitle, { color: theme.text, opacity: 0.6 }]}>분</Text>
-                    <View style={styles.timeGrid}>
-                        {Array.from({ length: 12 }, (_, i) => i * 5).map((item) => {
-                            const selected = minute === item;
-
-                            return (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={[
-                                        styles.timeChip,
-                                        {
-                                            backgroundColor: selected ? theme.primary : theme.background,
-                                            borderColor: selected ? theme.primary : theme.border,
-                                        },
-                                    ]}
-                                    onPress={() => {
-                                        setMinute(item);
-                                        setTime(`${ampm === 'AM' ? '오전' : '오후'} ${String(hour).padStart(2, '0')}:${String(item).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.timeChipText,
-                                            selected && {
-                                                color: theme.isDark ? '#1D3A29' : '#FFFFFF',
-                                            },
-                                        ]}
-                                    >
-                                        {String(item).padStart(2, '0')}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                            setTime(`${hh}:${mm}`);
+                        }}
+                    />
                 </View>
             )}
 

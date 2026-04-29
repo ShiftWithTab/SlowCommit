@@ -51,6 +51,9 @@ public class Routine {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "next_target_date" )
+    private LocalDate nextTargetDate;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

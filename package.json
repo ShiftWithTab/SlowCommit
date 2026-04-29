@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "react-native-get-random-values": "^2.0.0",
+    "uuid": "^14.0.0"
+  }
+}

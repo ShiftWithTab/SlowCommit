@@ -2,6 +2,7 @@ package com.example.focusapp.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,6 +34,10 @@ public class GoalReminderTime {
 
     @Column(name = "reminder_time", nullable = false, length = 5)
     private String reminderTime; // "08:00"
+
+    @Column(name = "next_target_date" )
+    private LocalDate nextTargetDate;
+
 
     @Column(nullable = false)
     private Boolean active = true;

@@ -279,6 +279,7 @@ export default function HomeScreen({ navigation, route }: Props) {
 
     const handleReminderManage = () => {
         setMenuVisible(false);
+        if (!userId) return;
         navigation.navigate('ReminderManage', { userId });
     };
     const handleRoutineManage = () => {
@@ -407,143 +408,101 @@ export default function HomeScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     content: {
         paddingHorizontal: 20,
         paddingTop: 96,
         paddingBottom: 120,
     },
+
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
     },
+
     headerTextBox: {
         flex: 1,
         paddingRight: 12,
     },
+
     title: {
-        // color: colors.text,
         fontSize: 28,
         fontWeight: '900',
     },
+
     subtitle: {
-        // color: colors.muted,
         marginTop: 6,
         fontSize: 15,
     },
+
     chipRow: {
         marginTop: 18,
     },
-    level: {
-        // color: colors.text,
-        fontSize: 18,
-        fontWeight: '700',
-        marginTop: 14,
-        marginBottom: 12,
-    },
-    calendarHeaderRow: {
-        marginTop: 16,
-        marginBottom: 8,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    monthButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dropdownOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.35)',
-    },
-    modalBackdrop: {
-        flex: 1,
-    },
+
     menuButton: {
         width: 42,
         height: 42,
         borderRadius: 14,
-        // backgroundColor: '#1E1E22',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
+
+    dropdownOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.35)',
+    },
+
     dropdownWrapper: {
         position: 'absolute',
         top: 105,
         right: 20,
     },
+
     dropdownMenu: {
         width: 210,
-        // backgroundColor: '#151518',
         borderRadius: 20,
         paddingTop: 8,
         paddingBottom: 6,
         paddingHorizontal: 14,
         borderWidth: 1,
-        // borderColor: '#26262B',
+
         shadowColor: '#000',
         shadowOpacity: 0.18,
         shadowRadius: 12,
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {
+            width: 0,
+            height: 6,
+        },
+
         elevation: 8,
     },
 
-    dropdownItem: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-    },
-
-    dropdownItemText: {
-        color: '#F5F5F5',
-        fontSize: 15,
-        fontWeight: '700',
-    },
     menuHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+
         paddingHorizontal: 4,
         paddingTop: 6,
         paddingBottom: 10,
     },
+
     menuHeaderTitle: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '800',
     },
+
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+
         paddingVertical: 14,
         paddingHorizontal: 4,
     },
+
     menuItemText: {
         fontSize: 15,
         fontWeight: '700',
-    },
-    monthButtonText: {
-        fontSize: 18,
-        fontWeight: '700',
-        // color: colors.text,
-    },
-    todayButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 12,
-        backgroundColor: '#FFFFFF',
-    },
-    todayButtonText: {
-        fontSize: 14,
-        fontWeight: '700',
-        // color: colors.text,
     },
 });
