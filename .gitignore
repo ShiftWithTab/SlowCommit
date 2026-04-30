@@ -34,3 +34,5 @@ frontend/src/constants/config.ts
 # [Database]
 *.db
 *.sqlite
+.env
+.env.*

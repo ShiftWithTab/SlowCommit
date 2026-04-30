@@ -9,6 +9,7 @@ import {
     StyleSheet,
     Text,
     View,
+    useColorScheme,
 } from 'react-native';
 import FloatingField from '../components/FloatingField';
 import PrimaryButton from '../components/PrimaryButton';
@@ -26,9 +27,11 @@ import type { RootStackParamList } from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../constants/storage';
 
+
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const cycleOptions: CycleOption[] = ['매일', '주 3회', '주 5회'];
 const emojiOptions = ['🌱', '🔥', '💫', '📚', '🏃‍♂️','🚀'];
 const characterOptions = [
     { id: 1, emoji: '🐥' },
@@ -42,6 +45,9 @@ const characterOptions = [
 export default function OnboardingScreen() {
     const navigation = useNavigation<NavigationProp>();
 
+    const scheme = useColorScheme(); // 'light' | 'dark'
+    const isDark = scheme === 'dark';
+
     const [step, setStep] = useState<Step>(1);
     const [userId, setUserId] = useState<number | null>(null);
 
@@ -53,9 +59,13 @@ export default function OnboardingScreen() {
     const [goalTitle, setGoalTitle] = useState('');
     const [motto, setMotto] = useState('');
     const [deadline, setDeadline] = useState('2026-04-30');
-    const [cycle, setCycle] = useState<CycleOption>('주 5회');
+    const [deadlineDate, setDeadlineDate] = useState<Date | null>(null);
+    const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
+    const formatDate = (date: Date) => {
+        return date.toISOString().slice(0, 10);
+    };
     const [preferredEmoji, setPreferredEmoji] = useState('🌱');
-    const [characterName, setCharacterName] = useState('');
+    // const [characterName, setCharacterName] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
@@ -65,7 +75,7 @@ export default function OnboardingScreen() {
 
     const [characterId, setCharacterId] = useState<number | null>(1);
 
-    const totalSteps = 8;
+    const totalSteps = 7;
 
     const progressText = useMemo(
         () => `${Math.min(step, totalSteps)}/${totalSteps}`,
@@ -82,11 +92,11 @@ export default function OnboardingScreen() {
     const canGoGoalTitle = goalTitle.trim() !== '';
     const canGoMotto = motto.trim() !== '';
     const canGoDeadline = deadline.trim() !== '';
-    const canGoCycle = cycle.trim() !== '';
     const canGoEmoji = showCustomEmojiInput
         ? customEmojiInput.trim() !== ''
         : preferredEmoji.trim() !== '';
-    const canComplete = characterName.trim() !== '' && characterId !== null;
+    // const canComplete = characterName.trim() !== '' && characterId !== null;
+    const canComplete = characterId !== null;
 
     const goNext = () =>
         setStep((prev) => {
@@ -118,18 +128,6 @@ export default function OnboardingScreen() {
         }
 
         goNext();
-    };
-    const cycleToNumber = (cycle: CycleOption): number => {
-        switch (cycle) {
-            case '매일':
-                return 1;
-            case '주 3회':
-                return 3;
-            case '주 5회':
-                return 5;
-            default:
-                return 1;
-        }
     };
 
     const handleStart = async () => {
@@ -221,10 +219,9 @@ export default function OnboardingScreen() {
                 goalTitle: goalTitle.trim(),
                 motto: motto.trim(),
                 characterId,
-                characterName: characterName.trim(),
+                characterName: '',
                 startDate: new Date().toISOString().slice(0, 10),
                 endDate: deadline,
-                alarmCycle: cycleToNumber(cycle),
                 preferredEmoji,
             });
 
@@ -277,7 +274,7 @@ export default function OnboardingScreen() {
                             <View style={styles.startInfoCard}>
                                 <Text style={styles.startInfoTitle}>온보딩에서 정할 것</Text>
                                 <Text style={styles.startInfoText}>
-                                    별명 · 목표 이름 · 모토 · 마감일 · 목표 주기 · 이모지 · 캐릭터 이름
+                                    별명 · 목표 이름 · 모토 · 마감일 ·  이모지 · 캐릭터
                                 </Text>
                             </View>
                         </View>
@@ -394,42 +391,48 @@ export default function OnboardingScreen() {
                         progressWidth={progressWidth}
                         onBack={goPrev}
                         title="마감일을 정해주세요"
-                        subtitle="지금은 문자열 입력으로 두고, 나중에 DatePicker로 바꾸면 돼요."
+                        subtitle="목표의 마감일을 정해주세요. 기한이 생기면 더 열심히 할 수 있을거에요."
                         footer={<PrimaryButton label="다음으로" disabled={!canGoDeadline} onPress={goNext} />}
                     >
-                        <FloatingField
-                            label="목표 마감일"
-                            value={deadline}
-                            onChangeText={setDeadline}
-                            placeholder="YYYY-MM-DD"
-                        />
+                        <Pressable
+                            style={styles.datePickerField}
+                            onPress={() => setShowDeadlinePicker((prev) => !prev)}
+                        >
+                            <Text style={styles.datePickerLabel}>목표 마감일</Text>
+                            <Text style={styles.datePickerValue}>
+                                {deadline || 'YYYY-MM-DD'}
+                            </Text>
+                        </Pressable>
+
+                        {showDeadlinePicker && (
+                            <View
+                                style={[
+                                    styles.datePickerBox,
+                                    { backgroundColor: isDark ? '#17171B' : '#FFFFFF' }
+                                ]}
+                            >
+                                <DateTimePicker
+                                        value={deadlineDate ?? new Date()}
+                                        mode="date"
+                                        display="spinner"
+                                        textColor={isDark ? '#FFFFFF' : '#171717'}
+                                        themeVariant={isDark ? 'dark' : 'light'}
+                                    onChange={(event, selectedDate) => {
+                                        if (event.type === 'dismissed') {
+                                            setShowDeadlinePicker(false);
+                                            return;
+                                        }
+
+                                        if (selectedDate) {
+                                            setDeadlineDate(selectedDate);
+                                            setDeadline(formatDate(selectedDate));
+                                        }
+                                    }}
+                                />
+                            </View>
+                        )}
                     </StepLayout>
-                ) : step === 6 ? (
-                    <StepLayout
-                        stepText={progressText}
-                        progressWidth={progressWidth}
-                        onBack={goPrev}
-                        title="목표 주기를 골라주세요"
-                        subtitle="내 리듬에 맞는 빈도를 선택하면 돼요."
-                        footer={<PrimaryButton label="다음으로" disabled={!canGoCycle} onPress={goNext} />}
-                    >
-                        <View style={styles.cycleGrid}>
-                            {cycleOptions.map((option) => {
-                                const selected = cycle === option;
-                                return (
-                                    <Pressable
-                                        key={option}
-                                        onPress={() => setCycle(option)}
-                                        style={[styles.cycleCard, selected && styles.cycleCardSelected]}
-                                    >
-                                        <Text style={styles.cycleLabel}>주기</Text>
-                                        <Text style={styles.cycleValue}>{option}</Text>
-                                    </Pressable>
-                                );
-                            })}
-                        </View>
-                    </StepLayout>
-                ) : step === 7 ? (
+                )  : step === 6 ? (
                     <StepLayout
                         stepText={progressText}
                         progressWidth={progressWidth}
@@ -480,13 +483,13 @@ export default function OnboardingScreen() {
                             </View>
                         )}
                     </StepLayout>
-                ) : step === 8 ? (
+                ) : step === 7 ? (
                     <StepLayout
                         stepText={progressText}
                         progressWidth={progressWidth}
                         onBack={goPrev}
-                        title="캐릭터 이름을 정해주세요"
-                        subtitle="이 친구가 앞으로 네 목표를 같이 키워줄 거예요."
+                        title="캐릭터를 선택해주세요"
+                        subtitle="함께 성장할 캐릭터를 골라보세요."
                         footer={
                             <PrimaryButton
                                 label="완료하기"
@@ -517,12 +520,12 @@ export default function OnboardingScreen() {
                             })}
                         </View>
 
-                        <FloatingField
-                            label="캐릭터 이름"
-                            value={characterName}
-                            onChangeText={setCharacterName}
-                            placeholder="예: 꾸미"
-                        />
+                        {/*<FloatingField*/}
+                        {/*    label="캐릭터 이름"*/}
+                        {/*    value={characterName}*/}
+                        {/*    onChangeText={setCharacterName}*/}
+                        {/*    placeholder="예: 꾸미"*/}
+                        {/*/>*/}
                     </StepLayout>
                 ) : null}
             </View>
@@ -596,33 +599,6 @@ const styles = StyleSheet.create({
     feedbackTextError: {
         color: '#e11d48',
     },
-    cycleGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 14,
-    },
-    cycleCard: {
-        width: '47.8%',
-        borderRadius: 22,
-        borderWidth: 1,
-        borderColor: '#e5e5e5',
-        backgroundColor: '#ffffff',
-        padding: 18,
-    },
-    cycleCardSelected: {
-        borderColor: '#86efac',
-        backgroundColor: '#f0fdf4',
-    },
-    cycleLabel: {
-        fontSize: 12,
-        color: '#a3a3a3',
-    },
-    cycleValue: {
-        marginTop: 8,
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#171717',
-    },
     emojiGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -664,18 +640,31 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#737373',
     },
-    // characterCard: {
-    //     borderRadius: 28,
-    //     backgroundColor: '#fffbeb',
-    //     borderWidth: 1,
-    //     borderColor: '#fde68a',
-    //     paddingVertical: 28,
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    // },
-    // characterEmoji: {
-    //     fontSize: 72,
-    // },
+    datePickerBox: {
+        marginTop: 16,
+        borderRadius: 20,
+        overflow: 'hidden',
+    },
+    datePickerField: {
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#e5e5e5',
+        backgroundColor: '#ffffff',
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+    },
+
+    datePickerLabel: {
+        fontSize: 12,
+        color: '#a3a3a3',
+        marginBottom: 8,
+    },
+
+    datePickerValue: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#171717',
+    },
     characterGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',

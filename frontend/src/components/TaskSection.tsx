@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Task } from '../types';
-import { colors } from '../theme/colors';
-
+// import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 type Props = {
   title: string;
   color: string;
@@ -19,21 +20,30 @@ export default function TaskSection({
                                       onAdd,
                                       onLongPress,
                                     }: Props) {
+  const theme = useTheme();
   return (
-      <View style={styles.section}>
-        {/* 헤더 */}
+      <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.headerRow}>
           <View style={[styles.headerPill, { backgroundColor: color }]}>
-            <Text style={styles.headerText}>{title}</Text>
+            <Text style={[styles.headerText, { color: theme.isDark ? '#1c1c1c' : '#1c1c1c' }]}>
+              {title}
+            </Text>
           </View>
 
-          <Pressable onPress={onAdd} style={styles.addButton} hitSlop={10}>
-            <Text style={styles.addText}>+</Text>
+          <Pressable
+              onPress={onAdd}
+              style={[styles.addButton, { borderColor: theme.text }]}
+              hitSlop={10}
+          >
+            <Ionicons name="add" size={20} color={theme.text} />
           </Pressable>
         </View>
 
         {tasks.length === 0 ? (
-            <Text style={styles.emptyText}>할 일이 없습니다</Text>
+
+            <Text style={[styles.emptyText, { color: theme.text, opacity: 0.55 }]}>
+              오늘 할 일이 없습니다
+            </Text>
         ) : (
             tasks.map((task) => (
                 <Pressable
@@ -46,16 +56,29 @@ export default function TaskSection({
                   <View
                       style={[
                         styles.checkbox,
-                        task.completed && styles.checkboxDone,
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.border,
+                        },
+                        task.completed && {
+                          backgroundColor: theme.text,
+                          borderColor: theme.text,
+                        },
                       ]}
                   >
-                    {task.completed && <Text style={styles.check}>✓</Text>}
+                    {task.completed && (
+                        <Text style={[styles.check, { color: theme.background }]}>✓</Text>
+                    )}
                   </View>
 
                   <Text
                       style={[
                         styles.taskText,
-                        task.completed && styles.doneText,
+                        { color: theme.text },
+                        task.completed && {
+                          opacity: 0.45,
+                          textDecorationLine: 'line-through',
+                        },
                       ]}
                   >
                     {task.title}
@@ -70,92 +93,57 @@ export default function TaskSection({
 const styles = StyleSheet.create({
   section: {
     marginTop: 18,
-    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 18,
     borderWidth: 1,
-    borderColor: colors.border,
   },
-
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-
   headerPill: {
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-
   headerText: {
-    color: colors.background,
     fontSize: 15,
     fontWeight: '700',
   },
-
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 14,
   },
-
   checkbox: {
     width: 22,
     height: 22,
     borderWidth: 1.5,
-    borderColor: colors.border,
     borderRadius: 6,
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
   },
-
-  checkboxDone: {
-    backgroundColor: colors.text,
-    borderColor: colors.text,
-  },
-
   check: {
-    color: colors.surface,
     fontWeight: '700',
     fontSize: 12,
   },
-
   taskText: {
-    color: colors.text,
     fontSize: 16,
     flex: 1,
   },
-
-  doneText: {
-    color: colors.muted,
-    textDecorationLine: 'line-through',
-  },
-
   emptyText: {
-    color: colors.muted,
     fontSize: 15,
     marginTop: 8,
   },
-
   addButton: {
-    width: 30,
-    height: 30,
+    width: 25,
+    height: 25,
     borderRadius: 15,
-    backgroundColor: colors.add,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.8,
+    // backgroundColor: 'transparent',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  addText: {
-    color: colors.background,
-    fontSize: 18,
-    fontWeight: '600',
     justifyContent: 'center',
   },
 });

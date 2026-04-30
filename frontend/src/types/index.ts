@@ -5,6 +5,7 @@ export type GoalCategory = {
   colorHex: string;
   active: boolean;
   motto?: string;
+  endDate?: string; // 추가
 };
 
 export type Task = {

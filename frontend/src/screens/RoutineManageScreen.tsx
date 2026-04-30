@@ -8,10 +8,14 @@ import {
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import {NativeStackScreenProps} from "@react-navigation/native-stack";
-import {RootStackParamList} from "../types/navigation";
 
+import {NativeStackScreenProps} from "@react-navigation/native-stack";
+import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import Feather from '@expo/vector-icons/Feather';
+
+import {RootStackParamList} from "../types/navigation";
+import { useTheme } from '../theme/ThemeContext';
 type Category = {
     id: string;
     name: string;
@@ -51,43 +55,54 @@ function stringToColor(str: string) {
 
 
 export default function RoutineManageScreen({ route, navigation }: Props) {
+    const theme = useTheme();
+
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [routinesMap, setRoutinesMap] = useState<Record<string, any[]>>({});
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const { userId } = route.params;
+    const fetchData = async () => {
+        try {
+            const { userId } = route.params;
 
-                if (!userId) {
-                    console.log('userId 없음');
-                    return;
-                }
-
-                const res = await api.get<GoalResponse[]>(`/goals/users/${userId}/active`);
-
-                const data = res.data;
-
-                const mapped: Category[] = data.map((item) => ({
-                    id: String(item.id),
-                    name: item.title,
-                }));
-
-                setCategories(mapped);
-            } catch (err) {
-                console.error('목표 목록 조회 에러:', err);
-            } finally {
-                setLoading(false);
+            if (!userId) {
+                console.log('userId 없음');
+                return;
             }
-        };
 
-        fetchData();
-    }, [route.params]);
+            const res = await api.get<GoalResponse[]>(`/goals/users/${userId}/active`);
 
+            const data = res.data;
+
+            const mapped: Category[] = data.map((item) => ({
+                id: String(item.id),
+                name: item.title,
+            }));
+
+            setCategories(mapped);
+        } catch (err) {
+            console.error('목표 목록 조회 에러:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchData();
+
+            // 루틴 캐시 초기화
+            setRoutinesMap({});
+
+            // 펼쳐진 카테고리가 있으면 루틴도 다시 조회
+            if (expandedId) {
+                fetchRoutines(expandedId);
+            }
+        }, [expandedId])
+    );
     const handlePressCategory = (category: Category) => {
-        navigation.navigate('RoutineCreate', { goalId: category.id });
+        navigation.navigate('RoutineCreate', { goalId: Number(category.id) });
     };
 
     const fetchRoutines = async (goalId: string) => {
@@ -139,65 +154,143 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={[styles.container, { backgroundColor: theme.background }]}
+            contentContainerStyle={styles.content}
+        >
             <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.back}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.title}>루틴 관리</Text>
-            </View>
 
-            <Text style={styles.description}>
-                카테고리를 선택하여 해당 카테고리의 루틴을 추가할 수 있습니다.
-            </Text>
+                {/* 상단 row */}
+                <View style={styles.headerTop}>
+                    <TouchableOpacity
+                        style={[
+                            styles.back,
+                            { backgroundColor: theme.card, borderColor: theme.border }
+                        ]}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Ionicons name="chevron-back" size={24} color={theme.text} />
+                    </TouchableOpacity>
+
+                    <Text style={[styles.headerTitle, { color: theme.text }]}>
+                        루틴 관리
+                    </Text>
+
+                    {/* 오른쪽 균형용 빈칸 */}
+                    <View style={{ width: 42 }} />
+                </View>
+
+                {/* 서브텍스트 */}
+                <Text style={[styles.headerSubtitle, { color: theme.text, opacity: 0.55 }]}>
+                    목표별 루틴을 추가하고 관리해요
+                </Text>
+            </View>
 
             {categories.map((category) => {
                 const isExpanded = expandedId === category.id;
                 const color = stringToColor(category.name);
 
                 return (
-                    <View key={category.id} style={styles.card}>
-                        {/* 🔽 헤더 */}
+                    <View
+                        key={category.id}
+                        style={[
+                            styles.card,
+                            { backgroundColor: theme.card, borderColor: theme.border },
+                        ]}
+                    >
                         <TouchableOpacity
-                            style={[styles.categoryButton, { color }]}
+                            style={styles.categoryButton}
+                            activeOpacity={0.85}
                             onPress={() => toggleExpand(category.id)}
                         >
-                            <Text style={[styles.categoryText, { color }]}>
-                                {category.name}
-                            </Text>
+                            <View style={styles.categoryLeft}>
+                                <View style={[styles.colorDot, { backgroundColor: color }]} />
 
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                                <Ionicons name="add-circle-outline" size={26} color="#fff"
-                                          onPress={() =>
-                                              navigation.navigate('RoutineCreate', { goalId: category.id })
-                                          }
-                                />
-
-                                <Text style={styles.arrow}>
-                                    {isExpanded ? '▲' : '▼'}
+                                <Text
+                                    style={[styles.categoryText, { color: theme.text }]}
+                                    numberOfLines={1}
+                                >
+                                    {category.name}
                                 </Text>
+                            </View>
+
+                            <View style={styles.actionRow}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.iconButton,
+                                        {
+                                            backgroundColor: theme.background,
+                                            borderColor: theme.border,
+                                        },
+                                    ]}
+                                    onPress={() =>
+                                        navigation.navigate('RoutineCreate', { goalId: Number(category.id) })
+                                    }
+                                >
+                                    <Ionicons name="add" size={18} color={theme.text} />
+                                </TouchableOpacity>
+
+                                <View
+                                    style={[
+                                        styles.iconButton,
+                                        {
+                                            backgroundColor: theme.background,
+                                            borderColor: theme.border,
+                                        },
+                                    ]}
+                                >
+                                    <Ionicons
+                                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                                        size={18}
+                                        color={theme.text}
+                                    />
+                                </View>
                             </View>
                         </TouchableOpacity>
 
-                        {/* 🔽 펼쳐진 루틴 리스트 */}
-                        {isExpanded && (
-                            <View style={styles.routineBox}>
-                                {(routinesMap[category.id] || []).map((routine) => (
-                                    <View key={routine.id} style={styles.routineRow}>
-                                        <Text style={styles.routineText}>
-                                            {routine.title}
-                                        </Text>
 
-                                        <TouchableOpacity
-                                            onPress={() => deleteRoutine(routine.id, category.id)}
+                        {isExpanded && (
+                            <View style={[styles.routineBox, { borderTopColor: theme.border }]}>
+                                {(routinesMap[category.id] || []).length === 0 ? (
+                                    <Text style={[styles.emptyText, { color: theme.text, opacity: 0.45 }]}>
+                                        아직 등록된 루틴이 없어요.
+                                    </Text>
+                                ) : (
+                                    (routinesMap[category.id] || []).map((routine, index) => (
+                                        <View
+                                            key={routine.id}
+                                            style={[
+                                                styles.routineRow,
+                                                {
+                                                    borderBottomColor:
+                                                        index === (routinesMap[category.id] || []).length - 1
+                                                            ? 'transparent'
+                                                            : theme.border,
+                                                },
+                                            ]}
                                         >
-                                            <Text style={styles.deleteBtn}>삭제</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
+                                            <View style={styles.routineLeft}>
+                                                <View style={[styles.routineDot, { backgroundColor: color }]} />
+                                                <Text
+                                                    style={[styles.routineText, { color: theme.text }]}
+                                                    numberOfLines={1}
+                                                >
+                                                    {routine.title}
+                                                </Text>
+                                            </View>
+
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.deleteIconButton,
+                                                    { backgroundColor: theme.background },
+                                                ]}
+                                                onPress={() => deleteRoutine(routine.id, category.id)}
+                                            >
+                                                <Feather name="trash-2" size={17} color="#FF5F5F" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))
+                                )}
                             </View>
                         )}
                     </View>
@@ -209,7 +302,6 @@ export default function RoutineManageScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#050506',
     },
     content: {
         paddingHorizontal: 20,
@@ -218,35 +310,47 @@ const styles = StyleSheet.create({
     },
     loadingContainer: {
         flex: 1,
-        backgroundColor: '#050506',
-        alignItems: 'center',
-        justifyContent: 'center',
+        // alignItems: 'center',
+        // justifyContent: 'space-between',
     },
     header: {
-        height: 48,
+        marginBottom: 28,
+    },
+    headerTop: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
+    },
+
+    headerTextBox: {
+        flex: 1,
+    },
+
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+    },
+
+    headerSubtitle: {
+        marginTop: 10,
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
     },
     back: {
-        position: 'absolute',
-        left: 0,
         width: 42,
         height: 42,
         borderRadius: 16,
-        backgroundColor: '#18181E',
         borderWidth: 1,
-        borderColor: '#24242C',
         alignItems: 'center',
         justifyContent: 'center',
     },
     title: {
-        color: '#FFFFFF',
         fontSize: 20,
         fontWeight: '800',
     },
     description: {
         marginTop: 34,
-        color: '#8B8B94',
         fontSize: 15,
         fontWeight: '600',
         lineHeight: 24,
@@ -256,12 +360,9 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     categoryButton: {
-        height: 58,
-        borderRadius: 18,
-        backgroundColor: '#17171B',
-        borderWidth: 1,
-        borderColor: '#25252B',
-        paddingHorizontal: 20,
+        minHeight: 82,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -270,38 +371,29 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '800',
     },
-    plusCircle: {
+    card: {
+        marginBottom: 14,
+        borderRadius: 26,
+        borderWidth: 1,
+        overflow: 'hidden',
+
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 3,
+    },
+    iconButton: {
         width: 34,
         height: 34,
-        borderRadius: 14,
-        backgroundColor: '#0D0D10',
+        borderRadius: 13,
         borderWidth: 1,
-        borderColor: '#202027',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    plusText: {
-        color: '#FFFFFF',
-        fontSize: 24,
-        fontWeight: '500',
-        marginTop: -2,
-    },
-    card: {
-        borderRadius: 18,
-        backgroundColor: '#17171B',
-        borderWidth: 1,
-        borderColor: '#25252B',
-        overflow: 'hidden',
-    },
-
-    arrow: {
-        color: '#8B8B94',
-        fontSize: 12,
     },
 
     routineBox: {
         borderTopWidth: 1,
-        borderTopColor: '#25252B',
         padding: 12,
         gap: 8,
     },
@@ -310,16 +402,58 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        borderBottomWidth : 1,
+    },
+    routineLeft: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingRight: 10,
+    },
+
+    routineDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 999,
     },
 
     routineText: {
-        color: '#fff',
         fontSize: 14,
     },
-
+    deleteIconButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     deleteBtn: {
         color: '#FF5F5F',
         fontSize: 13,
         fontWeight: '700',
+    },
+    colorDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+
+    categoryLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        flex: 1,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    emptyText: {
+        paddingVertical: 14,
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
     },
 });

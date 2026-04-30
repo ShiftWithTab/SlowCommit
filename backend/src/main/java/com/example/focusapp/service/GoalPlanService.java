@@ -11,6 +11,7 @@ import com.example.focusapp.repository.GoalPlanRepository;
 import com.example.focusapp.repository.UserRepository;
 import com.example.focusapp.repository.GoalDefinitionRepository;
 import com.example.focusapp.repository.GoalConfigRepository;
+import com.example.focusapp.dto.GoalConfigAlarmCycleUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +58,28 @@ public class GoalPlanService {
     }
 
     @Transactional
+    public GoalPlanResponse updateAlarmCycle(Long goalPlanId, GoalConfigAlarmCycleUpdateRequest request) {
+        GoalPlan plan = getGoalPlanEntity(goalPlanId);
+
+        updateStatusIfExpired(plan);
+
+        if (plan.getStatus() == GoalStatus.COMPLETED) {
+            throw new IllegalStateException("종료된 목표는 수정할 수 없습니다.");
+        }
+
+        if (request.getAlarmCycle() == null || request.getAlarmCycle() <= 0) {
+            throw new IllegalArgumentException("알림 주기는 1 이상이어야 합니다.");
+        }
+
+        if (plan.getGoalConfig() == null) {
+            throw new IllegalStateException("목표 설정이 존재하지 않습니다.");
+        }
+
+        plan.getGoalConfig().setAlarmCycle(request.getAlarmCycle());
+
+        return toDto(plan);
+    }
+    @Transactional
     public GoalPlanResponse updateGoal(Long goalId, UpdateGoalRequest request) {
         GoalPlan plan = getGoalPlanEntity(goalId);
 
@@ -83,7 +106,6 @@ public class GoalPlanService {
 
         return toDto(plan);
     }
-    //sje 추가
     @Transactional(readOnly = true)
     public GoalPlanResponse getGoal(Long goalId) {
         GoalPlan plan = goalPlanRepository.findById(goalId)
@@ -138,13 +160,13 @@ public class GoalPlanService {
 
         GoalConfig goalConfig = GoalConfig.builder()
                 .goalPlan(goalPlan)
-                .alarmCycle(request.getAlarmCycle())
+                .alarmCycle(1) // ⭐ 기본값
                 .preferredEmoji(request.getPreferredEmoji())
                 .build();
 
         goalConfigRepository.saveAndFlush(goalConfig);
 
-        dailyTaskService.generateInitialTasks(goalPlan.getId());
+//        dailyTaskService.generateInitialTasks(goalPlan.getId());
 
         return new SetupResponse(
                 goalPlan.getId(),
@@ -224,7 +246,9 @@ public class GoalPlanService {
                 characterId,
                 characterName,
                 active,
-                motto
+                motto,
+                plan.getGoalConfig().getAlarmCycle(),
+                plan.getEndDate()
         );
     }
 }

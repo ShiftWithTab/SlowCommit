@@ -11,11 +11,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { api } from '../api/client';
-import { colors } from '../theme/colors';
+// import { colors } from '../theme/colors';
 import { STORAGE_KEYS } from '../constants/storage';
 import { CONFIG } from '../constants/config';
 import CategoryChip from "../components/CategoryChip";
 import { GoalCategory } from "../types";
+
+import { useTheme } from '../theme/ThemeContext';
 
 export default function StatsScreen() {
   const [stats, setStats] = useState({
@@ -25,6 +27,8 @@ export default function StatsScreen() {
     currentLevel: 1,
   });
 
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const [refreshing, setRefreshing] = useState(false);
   const [characterImageUrl, setCharacterImageUrl] = useState<string | null>(null);
   const [categories, setCategories] = useState<GoalCategory[]>([]);
@@ -185,34 +189,34 @@ export default function StatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     paddingTop: 64,
     paddingHorizontal: 20,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 28,
     fontWeight: '900',
     marginBottom: 10,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 24,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   label: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 14,
     marginBottom: 8,
   },
   value: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 32,
     fontWeight: '900',
   },

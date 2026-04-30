@@ -39,7 +39,7 @@ export default function InitScreen({ navigation }: Props) {
                     const guestData: GuestUserResponse = await guestResponse.json();
                     userId = String(guestData.userId);
                     await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, userId);
-                    await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '1');
+                    // await AsyncStorage.setItem(STORAGE_KEYS.GOAL_PLAN_ID, '1');
                 }
 
                 const statusResponse = await fetch(

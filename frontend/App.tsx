@@ -1,4 +1,4 @@
-import { NavigationContainer, DarkTheme } from '@react-navigation/native';
+import {NavigationContainer, DarkTheme} from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import RootNavigator from 'src/navigation/RootNavigator';
 import Toast from 'react-native-toast-message';
@@ -8,18 +8,43 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ResultModal from './src/components/ResultModal';
 import { api } from './src/api/client';
 import { STORAGE_KEYS } from './src/constants/storage';
+import { ThemeProvider } from './src/theme/ThemeContext';
+import { useTheme } from './src/theme/ThemeContext';
+import React from 'react';
+import * as Notifications from 'expo-notifications';
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+    }),
+});
+function AppContent() {
+    const theme = useTheme();
 
-const theme = {
-    ...DarkTheme,
-    colors: {
-        ...DarkTheme.colors,
-        background: '#090909',
-        card: '#121212',
-        border: '#1f1f1f',
-        text: '#f5f5f5',
-        primary: '#c8f7a6',
-    },
-};
+    // 기존 state/useEffect 전부 여기로 이동
+    return (
+        <View style={{ flex: 1, backgroundColor: theme.background }}>
+            <NavigationContainer
+                theme={{
+                    dark: theme.isDark,
+                    colors: {
+                        primary: theme.primary,
+                        background: theme.background,
+                        card: theme.card,
+                        text: theme.text,
+                        border: theme.border,
+                        notification: theme.primary,
+                    },
+                } as any}
+            >
+                <StatusBar style={theme.isDark ? 'light' : 'dark'} />
+                <RootNavigator />
+            </NavigationContainer>
+        </View>
+    );
+}
 
 export default function App() {
     const [current, setCurrent] = useState<any | null>(null);
@@ -70,18 +95,8 @@ export default function App() {
     };
 
     return (
-        <View style={{ flex: 1 }}>
-            <NavigationContainer theme={theme}>
-                <StatusBar style="light" />
-                <RootNavigator />
-            </NavigationContainer>
-
-            <ResultModal
-                visible={visible}
-                result={current}
-                onClose={handleClose}
-            />
-            <Toast />
-        </View>
+        <ThemeProvider>
+            <AppContent />
+        </ThemeProvider>
     );
 }
