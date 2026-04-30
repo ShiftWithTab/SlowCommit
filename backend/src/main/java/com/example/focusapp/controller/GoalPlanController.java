@@ -5,6 +5,7 @@ import com.example.focusapp.dto.UpdateGoalRequest;
 import com.example.focusapp.dto.SetupRequest;
 import com.example.focusapp.dto.SetupResponse;
 import com.example.focusapp.service.GoalPlanService;
+import com.example.focusapp.dto.GoalConfigAlarmCycleUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -55,5 +56,12 @@ public class GoalPlanController {
             @RequestParam String status
     ) {
         return ResponseEntity.ok(goalPlanService.updateStatus(goalId, status));
+    }
+    @PatchMapping("/{goalId}/alarm-cycle")
+    public GoalPlanResponse updateAlarmCycle(
+            @PathVariable Long goalId,
+            @RequestBody GoalConfigAlarmCycleUpdateRequest request
+    ) {
+        return goalPlanService.updateAlarmCycle(goalId, request);
     }
 }

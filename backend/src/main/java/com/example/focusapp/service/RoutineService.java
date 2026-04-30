@@ -43,7 +43,7 @@ public class RoutineService {
         routine.setEndDate(req.getEndDate());
         routine.setInterval(req.getInterval());
         routine.setTime(req.getTime());
-
+        routine.setNextTargetDate(LocalDate.now());
         routineRepository.save(routine);
 
         generateDailyTasksFromRoutine(routine);

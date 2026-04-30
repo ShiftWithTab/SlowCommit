@@ -18,21 +18,92 @@ import MonthlyCalendar from '../components/MonthlyCalendar';
 import PixelCard from '../components/PixelCard';
 import DailyTaskSection from '../components/DailyTaskSection';
 
-import { mockSummary } from '../api/mock';
-import { colors } from '../theme/colors';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
 import { STORAGE_KEYS } from '../constants/storage';
 
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types/navigation';
 import { api } from '../api/client';
 import { GoalCategory } from "../types";
+import { useTheme } from '../theme/ThemeContext';
+
+import Constants from 'expo-constants';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen({ navigation, route }: Props) {
+    const theme = useTheme();
+
+    const registerPushToken = async (userId: number) => {
+        try {
+            if (!Device.isDevice) {
+                console.log('실기기에서만 푸시 토큰 발급 가능');
+                return;
+            }
+
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+
+            if (existingStatus !== 'granted') {
+                const { status } = await Notifications.requestPermissionsAsync();
+                finalStatus = status;
+            }
+
+            if (finalStatus !== 'granted') {
+                console.log('푸시 권한 거부됨');
+                return;
+            }
+
+            const tokenData = await Notifications.getExpoPushTokenAsync({projectId: Constants.expoConfig?.extra?.eas?.projectId,});
+            const pushToken = tokenData.data;
+            console.log('pushToken:', pushToken);
+
+            await api.post('/push-tokens', {
+                userId,
+                pushToken,
+            });
+
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const getDDayInfo = (endDate: string) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+
+        const diff = Math.ceil(
+            (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (diff > 0) {
+            return {
+                label: `D-${diff}`,
+                text: `목표일이 다가와요.`,
+            };
+        }
+
+        if (diff === 0) {
+            return {
+                label: 'D-DAY',
+                text: '오늘이 목표 마감일이에요!',
+            };
+        }
+
+        return {
+            label: `D+${Math.abs(diff)}`,
+            text: '목표 기간이 종료되었어요',
+        };
+    };
     const [username, setUsername] = useState('');
     const [currentLevel, setCurrentLevel] = useState<number | null>(null);
     const [goalPlanId, setGoalPlanId] = useState<number | null>(null);
+    const [motto, setMotto] = useState('');
 
     const [refreshing, setRefreshing] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -52,8 +123,13 @@ export default function HomeScreen({ navigation }: Props) {
         `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     );
     const selectedCategory = categories.find(c => c.id === selectedGoalId);
+
+    const ddayInfo = selectedCategory?.endDate
+        ? getDDayInfo(selectedCategory.endDate)
+        : null;
+
     const [menuVisible, setMenuVisible] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
     const loadData = async () => {
         try {
             const savedUsername = await AsyncStorage.getItem(STORAGE_KEYS.USERNAME);
@@ -81,6 +157,7 @@ export default function HomeScreen({ navigation }: Props) {
                     emoji: goal.emoji,
                     active: goal.active,
                     motto: goal.motto,
+                    endDate: goal.endDate,
                     colorHex: getPastelColor(),
                 }));
 
@@ -91,16 +168,24 @@ export default function HomeScreen({ navigation }: Props) {
                 if (first) {
                     setSelectedGoalId(first.id);
                     setGoalPlanId(first.id);
+                    setMotto(first.motto ?? '');
                 }
             }
 
             if (savedUserId) {
-                setUserId(savedUserId);
+                setUserId(Number(savedUserId));
+
             }
         } catch (e) {
             console.log(e);
         }
     };
+
+    useEffect(() => {
+        if (!userId) return;
+        registerPushToken(userId);
+    }, [userId]);
+
 
     useFocusEffect(
         useCallback(() => {
@@ -142,8 +227,10 @@ export default function HomeScreen({ navigation }: Props) {
     };
 
     const handleSelectCategory = (goalId: number) => {
+        const selected = categories.find(c => c.id === goalId);
         setSelectedGoalId(goalId);
         setGoalPlanId(goalId);
+        setMotto(selected?.motto ?? '');
     };
 
     const onRefresh = async () => {
@@ -187,46 +274,46 @@ export default function HomeScreen({ navigation }: Props) {
 
     const handleCategoryManage = () => {
         setMenuVisible(false);
-        console.log('카테고리 관리');
-        // navigation.navigate('CategoryManage');
+        navigation.navigate('GoalManage');
     };
 
     const handleReminderManage = () => {
         setMenuVisible(false);
-        console.log('리마인더 관리');
-        // navigation.navigate('ReminderManage');
+        if (!userId) return;
+        navigation.navigate('ReminderManage', { userId });
     };
     const handleRoutineManage = () => {
         setMenuVisible(false);
         if (!userId) return;
         navigation.navigate('RoutineManage', { userId });
     };
+
+
     return (
         <>
             <ScrollView
-                style={styles.container}
+                style={{ flex: 1, backgroundColor: theme.background }}
                 contentContainerStyle={styles.content}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                }
             >
                 <View style={styles.headerRow}>
                     <View style={styles.headerTextBox}>
-                        <Text style={styles.title}>
-                            {username
-                                ? `${username}님, ${selectedCategory?.motto || '오늘도 한 칸 전진'}`
-                                : selectedCategory?.motto || '오늘도 한 칸 전진'}
+                        <Text style={[styles.title, { color: theme.text }]}>
+                            {username ? `${username}님, ${motto || '오늘도 한 칸 전진'}`
+                                : motto || '오늘도 한 칸 전진'}
                         </Text>
-                        <Text style={styles.subtitle}>
-                            {mockSummary.streak}일째 루틴 이어가는 중
-                        </Text>
+
+                        {ddayInfo && (
+                            <Text style={[styles.subtitle, { color: theme.text, opacity: 0.6 }]}>
+                                {ddayInfo.label} · {ddayInfo.text}
+                            </Text>
+                        )}
                     </View>
 
                     <TouchableOpacity
-                        style={styles.menuButton}
+                        style={[styles.menuButton, { backgroundColor: theme.card }]}
                         onPress={() => setMenuVisible(true)}
                     >
-                        <Ionicons name="menu" size={24} color="#FFFFFF" />
+                        <Ionicons name="menu" size={24} color={theme.text} />
                     </TouchableOpacity>
                 </View>
 
@@ -265,8 +352,10 @@ export default function HomeScreen({ navigation }: Props) {
                         onLevelChange={setCurrentLevel}
                         refreshKey={refreshKey}
                         onLevelUp={fetchCharacter}
+                        // onLevelUp={() => fetchCharacter(Number(userId))}
                         isActive={selectedCategory?.active ?? false}
                         onTasksUpdated={() => setRefreshKey(prev => prev + 1)}
+
                     />
                 )}
             </ScrollView>
@@ -279,32 +368,38 @@ export default function HomeScreen({ navigation }: Props) {
             >
                 <Pressable style={styles.dropdownOverlay} onPress={() => setMenuVisible(false)}>
                     <View style={styles.dropdownWrapper}>
-                        <Pressable style={styles.dropdownMenu} onPress={() => {}}>
-                            <View style={styles.menuHeader}>
-                                <Text style={styles.menuHeaderTitle}>메뉴</Text>
-                                <TouchableOpacity onPress={() => setMenuVisible(false)}>
-                                    <Ionicons name="close" size={22} color="#FFFFFF" />
+                        <Pressable style={[
+                            styles.dropdownMenu,
+                            {
+                                backgroundColor: theme.card,
+                                borderColor: theme.border,
+                            }
+                        ]} onPress={() => {}}>
+                                <View style={styles.menuHeader}>
+                                    <Text style={[styles.menuHeaderTitle,{ color: theme.text }]}>메뉴</Text>
+                                    <TouchableOpacity onPress={() => setMenuVisible(false)}>
+                                        <Ionicons name="close" size={22} color={theme.text} />
+                                    </TouchableOpacity>
+                                </View>
+                                <TouchableOpacity style={styles.menuItem} onPress={handleCategoryCreate}>
+                                    <Ionicons name="add-circle-outline" size={18} color={theme.text} />
+                                    <Text style={[styles.menuItemText, { color: theme.text }]}>카테고리 등록</Text>
                                 </TouchableOpacity>
-                            </View>
-                            <TouchableOpacity style={styles.menuItem} onPress={handleCategoryCreate}>
-                                <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
-                                <Text style={styles.menuItemText}>카테고리 등록</Text>
-                            </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.menuItem} onPress={handleCategoryManage}>
-                                <Ionicons name="grid-outline" size={18} color="#FFFFFF" />
-                                <Text style={styles.menuItemText}>카테고리 관리</Text>
-                            </TouchableOpacity>
+                                <TouchableOpacity style={styles.menuItem} onPress={handleCategoryManage}>
+                                    <Ionicons name="grid-outline" size={18} color={theme.text} />
+                                    <Text style={[styles.menuItemText, { color: theme.text }]}>카테고리 관리</Text>
+                                </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.menuItem} onPress={handleReminderManage}>
-                                <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
-                                <Text style={styles.menuItemText}>리마인더 관리</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.menuItem} onPress={handleRoutineManage}>
-                                <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
-                                <Text style={styles.menuItemText}>루틴 관리</Text>
-                            </TouchableOpacity>
-                        </Pressable>
+                                <TouchableOpacity style={styles.menuItem} onPress={handleReminderManage}>
+                                    <Ionicons name="notifications-outline" size={18} color={theme.text} />
+                                    <Text style={[styles.menuItemText, { color: theme.text }]}>리마인더 관리</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.menuItem} onPress={handleRoutineManage}>
+                                    <Ionicons name="notifications-outline" size={18} color={theme.text} />
+                                    <Text style={[styles.menuItemText, { color: theme.text }]}>루틴 관리</Text>
+                                </TouchableOpacity>
+                            </Pressable>
                     </View>
                 </Pressable>
             </Modal>
@@ -313,92 +408,101 @@ export default function HomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    content: { paddingHorizontal: 20, paddingTop: 64, paddingBottom: 120 },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    headerTextBox: { flex: 1 },
-    title: { color: colors.text, fontSize: 28, fontWeight: '900' },
-    subtitle: { color: colors.muted, marginTop: 6 },
-    chipRow: { marginTop: 18, paddingLeft: 5,},
+    content: {
+        paddingHorizontal: 20,
+        paddingTop: 96,
+        paddingBottom: 120,
+    },
+
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+
+    headerTextBox: {
+        flex: 1,
+        paddingRight: 12,
+    },
+
+    title: {
+        fontSize: 28,
+        fontWeight: '900',
+    },
+
+    subtitle: {
+        marginTop: 6,
+        fontSize: 15,
+    },
+
+    chipRow: {
+        marginTop: 18,
+    },
+
     menuButton: {
         width: 42,
         height: 42,
         borderRadius: 14,
-        backgroundColor: '#1E1E22',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    dropdownOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
+
+    dropdownOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.35)',
+    },
+
     dropdownWrapper: {
         position: 'absolute',
         top: 105,
         right: 20,
     },
+
     dropdownMenu: {
         width: 210,
-        backgroundColor: '#151518',
         borderRadius: 20,
         paddingTop: 8,
         paddingBottom: 6,
         paddingHorizontal: 14,
         borderWidth: 1,
-        borderColor: '#26262B',
+
         shadowColor: '#000',
         shadowOpacity: 0.18,
         shadowRadius: 12,
-        shadowOffset: { width: 0, height: 6 },
+        shadowOffset: {
+            width: 0,
+            height: 6,
+        },
+
         elevation: 8,
     },
 
-    dropdownItem: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-    },
-
-    dropdownItemText: {
-        color: '#F5F5F5',
-        fontSize: 15,
-        fontWeight: '700',
-    },
     menuHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+
         paddingHorizontal: 4,
         paddingTop: 6,
         paddingBottom: 10,
     },
+
     menuHeaderTitle: {
-        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: '800',
     },
+
     menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+
         paddingVertical: 14,
         paddingHorizontal: 4,
     },
+
     menuItemText: {
-        color: '#F5F5F5',
         fontSize: 15,
         fontWeight: '700',
-    },
-    monthButtonText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: colors.text,
-    },
-    todayButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 12,
-        backgroundColor: '#FFFFFF',
-    },
-    todayButtonText: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: colors.text,
     },
 });

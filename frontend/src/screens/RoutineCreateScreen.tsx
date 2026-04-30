@@ -13,11 +13,15 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { api } from '../api/client';
 import {Ionicons} from "@expo/vector-icons";
+import { Calendar } from 'react-native-calendars';
+import {useTheme} from "../theme/ThemeContext";
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoutineCreate'>;
 
 export default function RoutineCreateScreen({ route, navigation }: Props) {
+    const theme = useTheme();
+
     const { goalId } = route.params;
 
     const [title, setTitle] = useState('');
@@ -26,11 +30,12 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
     const [manualAdd, setManualAdd] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const [startDate, setStartDate] = useState<Date | null>(null);
-    const [showStartPicker, setShowStartPicker] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [showCalendar, setShowCalendar] = useState(false);
+    const [selecting, setSelecting] = useState<'start' | 'end'>('start');
 
-    const [endDate, setEndDate] = useState<Date | null>(null);
-    const [showEndPicker, setShowEndPicker] = useState(false);
+    const today = new Date().toISOString().slice(0, 10);
 
     const [showCycleOptions, setShowCycleOptions] = useState(false);
     const [showCustomCycleInput, setShowCustomCycleInput] = useState(false);
@@ -38,63 +43,85 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
     const formatDate = (date: Date) => {
         return date.toISOString().slice(0, 10);
     };
+    const getMarkedDates = () => {
+        if (!startDate) return {};
 
-    const [showTimeOptions, setShowTimeOptions] = useState(false);
-    const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
-    const [hour, setHour] = useState(8);
-    const [minute, setMinute] = useState(0);
+        const marked: any = {
+            [startDate]: {
+                startingDay: true,
+                endingDay: !endDate,
+                color: theme.primary,
+                textColor: theme.isDark ? '#1D3A29' : '#FFFFFF',
+            },
+        };
 
-    const handleCreateRoutine = async () => {
-        if (!title.trim()) {
-            Alert.alert('알림', '루틴 내용을 입력해주세요.');
+        if (endDate) {
+            let current = new Date(startDate);
+            const end = new Date(endDate);
+
+            while (current <= end) {
+                const dateStr = current.toISOString().slice(0, 10);
+
+                marked[dateStr] = {
+                    color: dateStr === startDate || dateStr === endDate
+                        ? theme.primary
+                        : theme.isDark
+                            ? '#274832'
+                            : '#DDF7E5',
+                    textColor: dateStr === startDate || dateStr === endDate
+                        ? theme.isDark ? '#1D3A29' : '#FFFFFF'
+                        : theme.text,
+                    startingDay: dateStr === startDate,
+                    endingDay: dateStr === endDate,
+                };
+
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        return marked;
+    };
+
+    const onDayPress = (day: any) => {
+        const selectedDate = day.dateString;
+
+        if (selecting === 'start') {
+            setStartDate(selectedDate);
+            setEndDate('');
+            setSelecting('end');
             return;
         }
 
-        try {
-            setLoading(true);
+        if (selecting === 'end') {
+            if (!startDate) {
+                setStartDate(selectedDate);
+                setEndDate('');
+                setSelecting('end');
+                return;
+            }
 
-            const today = new Date();
+            if (new Date(selectedDate) < new Date(startDate)) {
+                setStartDate(selectedDate);
+                setEndDate('');
+                setSelecting('end');
+                return;
+            }
 
-            const finalStartDate = startDate ?? today;
-
-            const finalEndDate = endDate ?? new Date(
-                finalStartDate.getFullYear() + 1,
-                finalStartDate.getMonth(),
-                finalStartDate.getDate()
-            );
-
-            const interval = parseInterval(repeatCycle);
-
-            const formattedTime = getFormattedTime();
-
-            await api.post('/routines', {
-                goalPlanId: Number(goalId),
-                title: title.trim(),
-                startDate: formatDate(finalStartDate),
-                endDate: formatDate(finalEndDate),
-                interval: interval,
-                time: formattedTime,
-            });
-
-            Alert.alert('완료', '루틴이 생성되었습니다.');
-            navigation.goBack();
-        } catch (e) {
-            console.log('루틴 생성 실패:', e);
-            Alert.alert('오류', '루틴 생성에 실패했습니다.');
-        } finally {
-            setLoading(false);
+            setEndDate(selectedDate);
+            setShowCalendar(false);
         }
     };
+    const [showTimeOptions, setShowTimeOptions] = useState(false);
+
+    const [selectedTime, setSelectedTime] = useState(new Date());
 
     const getFormattedTime = (): string | null => {
         if (time === '없음') return null;
 
-        let h = hour;
+        const h = selectedTime.getHours();
+        const m = selectedTime.getMinutes();
 
-        if (ampm === 'PM' && hour < 12) h += 12;
-        if (ampm === 'AM' && hour === 12) h = 0;
-
-        return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
     };
 
     const parseInterval = (cycle: string): number | null => {
@@ -109,17 +136,73 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
         return 1;
     };
 
+    const handleCreateRoutine = async () => {
+        if (!title.trim()) {
+            Alert.alert('알림', '루틴 내용을 입력해주세요.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const today = new Date();
+
+            const now = new Date();
+            const finalStartDate = startDate || now.toISOString().slice(0, 10);
+
+            const fallbackEndDateObj = new Date(finalStartDate);
+            fallbackEndDateObj.setFullYear(fallbackEndDateObj.getFullYear() + 1);
+
+            const finalEndDate = endDate || fallbackEndDateObj.toISOString().slice(0, 10);
+
+            const interval = parseInterval(repeatCycle);
+
+            const formattedTime = getFormattedTime();
+
+            await api.post('/routines', {
+                goalPlanId: Number(goalId),
+                title: title.trim(),
+                startDate: finalStartDate,
+                endDate: finalEndDate,
+                interval: interval,
+                time: formattedTime,
+            });
+
+            Alert.alert('완료', '루틴이 생성되었습니다.');
+            navigation.goBack();
+        } catch (e) {
+            console.log('루틴 생성 실패:', e);
+            Alert.alert('오류', '루틴 생성에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={[styles.container, { backgroundColor: theme.background }]}
+            contentContainerStyle={styles.content}
+        >
             <View style={styles.header}>
-                <TouchableOpacity style={styles.circleBtn} onPress={() => navigation.goBack()}>
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
+                <TouchableOpacity
+                    style={[
+                        styles.circleBtn,
+                        { backgroundColor: theme.card, borderColor: theme.border }
+                    ]}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Ionicons name="chevron-back" size={28} color={theme.text} />
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>루틴</Text>
+                <Text style={[styles.headerTitle, { color: theme.text }]}>루틴</Text>
 
-                <TouchableOpacity style={styles.circleBtn} onPress={handleCreateRoutine}>
-                    <Ionicons name="checkmark" size={28} color="#fff" />
+                <TouchableOpacity style={[
+                    styles.circleBtn,
+                    { backgroundColor: theme.card, borderColor: theme.border }
+                ]}
+                                  onPress={handleCreateRoutine}
+                >
+                    <Ionicons name="checkmark" size={28} color={theme.text} />
                 </TouchableOpacity>
             </View>
 
@@ -127,85 +210,100 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="루틴 입력"
-                placeholderTextColor="#8c8c8c"
-                style={styles.input}
+                placeholderTextColor={theme.isDark ? '#7E7E88' : '#9CA3AF'}
+                style={[
+                    styles.input,
+                    {
+                        backgroundColor: theme.card,
+                        borderColor: theme.border,
+                        color: theme.text,
+                    },
+                ]}
             />
 
-            <View style={styles.card}>
+            <View style={[
+                styles.card,
+                { backgroundColor: theme.card, borderColor: theme.border }
+            ]}>
                 <TouchableOpacity
-                    style={styles.row}
+                    style={[styles.row, { borderBottomColor: theme.border }]}
                     onPress={() => {
-                        setShowEndPicker(false); // 다른 picker 닫기
-                        setShowStartPicker((prev) => !prev); // 현재 picker 토글
+                        setSelecting('start');
+                        setShowCalendar(true);
                     }}
                 >
-                    <Text style={styles.rowLabel}>시작 날짜</Text>
-                    <Text style={styles.rowValue}>
-                        {startDate ? formatDate(startDate) : '오늘'}
+                    <Text style={[styles.rowLabel, { color: theme.text }]}>시작 날짜</Text>
+                    <Text style={[styles.rowValue, { color: theme.text, opacity: 0.6 }]}>
+                        {startDate || '오늘'}
                     </Text>
                 </TouchableOpacity>
-                {showStartPicker && (
-                    <DateTimePicker
-                        value={startDate ?? new Date()}
-                        mode="date"
-                        display="spinner"
-                        onChange={(event, selectedDate) => {
-                            if (event.type === 'dismissed') {
-                                setShowStartPicker(false);
-                                return;
-                            }
 
-                            if (selectedDate) {
-                                setStartDate(selectedDate);
-                            }
-                        }}
-                    />
-                )}
                 <TouchableOpacity
-                    style={styles.row}
+                    style={[styles.row, { borderBottomColor: theme.border }]}
                     onPress={() => {
-                        setShowStartPicker(false); // 다른 picker 닫기
-                        setShowEndPicker((prev) => !prev); // 현재 picker 토글
+                        setSelecting('end');
+                        setShowCalendar(true);
                     }}
                 >
-                    <Text style={styles.rowLabel}>종료 날짜</Text>
-                    <Text style={styles.rowValue}>
-                        {endDate ? formatDate(endDate) : '목표 종료일'}
+                    <Text style={[styles.rowLabel, { color: theme.text }]}>종료 날짜</Text>
+                    <Text style={[styles.rowValue, { color: theme.text, opacity: 0.6 }]}>
+                        {endDate || '목표 종료일'}
                     </Text>
                 </TouchableOpacity>
             </View>
-            {showEndPicker && (
-                <DateTimePicker
-                    value={endDate ?? new Date()}
-                    mode="date"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                        if (event.type === 'dismissed') {
-                            setShowEndPicker(false);
-                            return;
-                        }
 
-                        if (selectedDate) {
-                            setEndDate(selectedDate);
-                        }
-                    }}
-                />
+            {showCalendar && (
+                <View style={[
+                    styles.calendarBox,
+                    { backgroundColor: theme.card, borderColor: theme.border }
+                ]}>
+                    <Calendar
+                        minDate={today}
+                        onDayPress={onDayPress}
+                        markingType="period"
+                        markedDates={getMarkedDates()}
+                        theme={{
+                            backgroundColor: theme.card,
+                            calendarBackground: theme.card,
+                            dayTextColor: theme.text,
+                            todayTextColor: theme.primary,
+                            arrowColor: theme.primary,
+                            monthTextColor: theme.text,
+                            textSectionTitleColor: theme.text,
+                            textDayFontWeight: '600',
+                            textMonthFontWeight: '800',
+                            textDayHeaderFontWeight: '600',
+                        }}
+                    />
+                </View>
             )}
-            <View style={styles.card}>
+            <View style={[
+                styles.card,
+                { backgroundColor: theme.card, borderColor: theme.border }
+            ]}>
                 <TouchableOpacity
-                    style={styles.row}
+                    style={[
+                        styles.row,
+                        { borderBottomColor: theme.border }
+                    ]}
                     onPress={() => setShowCycleOptions((prev) => !prev)}
                 >
-                    <Text style={styles.rowLabel}>반복</Text>
-                    <Text style={styles.rowValue}>{repeatCycle}</Text>
+                    <Text style={[styles.rowLabel, { color: theme.text }]}>반복</Text>
+                    <Text style={[styles.rowValue, { color: theme.text, opacity: 0.6 }]}>{repeatCycle}</Text>
                 </TouchableOpacity>
             </View>
             {showCycleOptions && (
-                <View style={styles.cycleDropdown}>
+                <View style={[
+                    styles.cycleDropdown,
+                    { backgroundColor: theme.card, borderColor: theme.border }
+                ]}>
                     {['매일', '3일마다', '일주일마다','매월','매년'].map((item) => (
                         <TouchableOpacity
                             key={item}
-                            style={styles.cycleOption}
+                            style={[
+                                styles.cycleOption,
+                                { borderBottomColor: theme.border }
+                            ]}
                             onPress={() => {
                                 setRepeatCycle(item);
                                 setCustomCycleInput('');
@@ -213,7 +311,7 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
                                 setShowCycleOptions(false);
                             }}
                         >
-                            <Text style={styles.cycleOptionText}>{item}</Text>
+                            <Text style={[styles.cycleOptionText, { color: theme.text }]}>{item}</Text>
                         </TouchableOpacity>
                     ))}
 
@@ -225,15 +323,23 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
                                 setShowCustomCycleInput(true);
                             }}
                         >
-                            <Text style={styles.cycleOptionText}>직접 입력</Text>
+                            <Text style={[styles.cycleOptionText, { color: theme.text }]}>직접 입력</Text>
                         </TouchableOpacity>
 
                         {showCustomCycleInput && (
                             <>
                                 <TextInput
-                                    style={styles.inlineCycleInput}
+                                    style={[
+                                        styles.inlineCycleInput,
+                                        {
+                                            backgroundColor: theme.background,
+                                            borderColor: theme.border,
+                                            color: theme.text,
+                                        },
+                                    ]}
                                     placeholder="숫자"
-                                    placeholderTextColor="#6E6E73"
+                                    placeholderTextColor={theme.isDark ? '#7E7E88' : '#9CA3AF'}
+
                                     keyboardType="numeric"
                                     value={customCycleInput}
                                     onChangeText={(text) => {
@@ -247,92 +353,52 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
                                         }
                                     }}
                                 />
-                                <Text style={styles.dayText}>일마다</Text>
+                                <Text style={[styles.dayText, { color: theme.text, opacity: 0.6 }]}>일마다</Text>
                             </>
                         )}
                     </View>
                 </View>
             )}
-            <View style={styles.card}>
+            <View style={[
+                styles.card,
+                { backgroundColor: theme.card, borderColor: theme.border }
+            ]}>
                 <TouchableOpacity
-                    style={styles.row}
+                    style={[
+                        styles.row,
+                        { borderBottomColor: theme.border }
+                    ]}
                     onPress={() => setShowTimeOptions((prev) => !prev)}
                 >
-                    <Text style={styles.rowLabel}>시간</Text>
-                    <Text style={styles.rowValue}>{time}</Text>
+                    <Text style={[styles.rowLabel, { color: theme.text }]}>시간</Text>
+                    <Text style={[styles.rowValue, { color: theme.text, opacity: 0.6 }]}>{time}</Text>
                 </TouchableOpacity>
             </View>
             {showTimeOptions && (
-                <View style={styles.timeBox}>
-                    <Text style={styles.timeSectionTitle}>오전 / 오후</Text>
-                    <View style={styles.timeButtonRow}>
-                        {[
-                            { label: '오전', value: 'AM' },
-                            { label: '오후', value: 'PM' },
-                        ].map((item) => {
-                            const selected = ampm === item.value;
+                <View
+                    style={[
+                        styles.timeBox,
+                        {
+                            backgroundColor: theme.card,
+                            borderColor: theme.border,
+                        },
+                    ]}
+                >
+                    <DateTimePicker
+                        value={selectedTime}
+                        mode="time"
+                        display="spinner"
+                        onChange={(event, date) => {
+                            if (!date) return;
 
-                            return (
-                                <TouchableOpacity
-                                    key={item.value}
-                                    style={[styles.timeChip, selected && styles.timeChipSelected]}
-                                    onPress={() => {
-                                        const nextAmpm = item.value as 'AM' | 'PM';
-                                        setAmpm(nextAmpm);
-                                        setTime(`${item.label} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
-                                        {item.label}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                            setSelectedTime(date);
 
-                    <Text style={styles.timeSectionTitle}>시</Text>
-                    <View style={styles.timeGrid}>
-                        {Array.from({ length: 24 }, (_, i) => i).map((item) => {
-                            const selected = hour === item;
+                            const hh = String(date.getHours()).padStart(2, '0');
+                            const mm = String(date.getMinutes()).padStart(2, '0');
 
-                            return (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={[styles.timeNumberButton, selected && styles.timeChipSelected]}
-                                    onPress={() => {
-                                        setHour(item);
-                                        setTime(`${ampm === 'AM' ? '오전' : '오후'} ${String(item).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
-                                        {String(item).padStart(2, '0')}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-
-                    <Text style={styles.timeSectionTitle}>분</Text>
-                    <View style={styles.timeGrid}>
-                        {Array.from({ length: 12 }, (_, i) => i * 5).map((item) => {
-                            const selected = minute === item;
-
-                            return (
-                                <TouchableOpacity
-                                    key={item}
-                                    style={[styles.timeNumberButton, selected && styles.timeChipSelected]}
-                                    onPress={() => {
-                                        setMinute(item);
-                                        setTime(`${ampm === 'AM' ? '오전' : '오후'} ${String(hour).padStart(2, '0')}:${String(item).padStart(2, '0')}`);
-                                    }}
-                                >
-                                    <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
-                                        {String(item).padStart(2, '0')}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                            setTime(`${hh}:${mm}`);
+                        }}
+                    />
                 </View>
             )}
 
@@ -357,7 +423,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     headerTitle: {
-        color: '#FFFFFF',
         fontSize: 20,
         fontWeight: '800',
     },
@@ -365,7 +430,6 @@ const styles = StyleSheet.create({
         width: 42,
         height: 42,
         borderRadius: 16,
-        backgroundColor: '#18181E',
         borderWidth: 1,
         borderColor: '#24242C',
         alignItems: 'center',
@@ -394,11 +458,10 @@ const styles = StyleSheet.create({
     row: {
         height: 56,
         paddingHorizontal: 18,
-        borderBottomWidth: 1,
-        borderBottomColor: '#25252B',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        borderBottomWidth: 1,
     },
     rowLabel: {
         color: '#FFFFFF',
@@ -467,7 +530,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#25252B',
     },
 
     cycleOptionText: {
@@ -480,8 +542,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#25252B',
     },
 
     customCycleLabelBox: {
@@ -576,5 +636,11 @@ const styles = StyleSheet.create({
 
     timeChipTextSelected: {
         color: '#FFFFFF',
+    },
+    calendarBox: {
+        marginTop: 8,
+        borderRadius: 18,
+        borderWidth: 1,
+        overflow: 'hidden',
     },
 });

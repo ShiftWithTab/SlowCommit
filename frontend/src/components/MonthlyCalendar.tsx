@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
-
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 type MonthlyCalendarProps = {
   year: number;
   month: number; // 1~12
@@ -24,8 +24,8 @@ export default function MonthlyCalendar({
                                           selectedDate,
                                           onPressDate
                                         }: MonthlyCalendarProps) {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+
+  const theme = useTheme();
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
@@ -39,21 +39,21 @@ export default function MonthlyCalendar({
       today.getFullYear() === year && today.getMonth() + 1 === month;
 
   const colors = {
-    cardBg: isDark ? '#151518' : '#FFFFFF',
-    cardBorder: isDark ? '#26262B' : '#F0F0F3',
-    title: isDark ? '#F5F5F7' : '#222222',
-    sub: isDark ? '#9B9BA1' : '#9A9A9A',
-    actionBg: isDark ? '#232329' : '#F4F4F6',
-    actionText: isDark ? '#D8D8DD' : '#555555',
-    weekText: isDark ? '#7E7E88' : '#A0A0A0',
-    dayText: isDark ? '#F2F2F4' : '#3A3A3A',
-    todayBg: isDark ? '#1E2C42' : '#EEF5FF',
-    todayBorder: '#8FD9A3',
-    todayText: '#B7F0C4',
-    badgeBg: isDark ? '#2A2418' : '#FFF7E8',
-    selectedBg: '#B8F1C6',
-    selectedText: '#1E3A2A',
-    selectedBorder: '#BFF3CC',
+    cardBg: theme.card,
+    cardBorder: theme.border,
+    title: theme.text,
+    sub: theme.text,
+    actionBg: theme.card,
+    actionText: theme.text,
+    weekText: theme.text,
+    dayText: theme.text,
+    todayBg: theme.card,
+    todayBorder: theme.primary,
+    todayText: theme.text,
+    badgeBg: theme.card,
+    selectedBg: theme.primary,
+    selectedText: theme.background,
+    selectedBorder: theme.primary,
   };
 
   return (
