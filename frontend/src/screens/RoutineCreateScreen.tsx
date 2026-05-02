@@ -150,10 +150,7 @@ export default function RoutineCreateScreen({ route, navigation }: Props) {
             const now = new Date();
             const finalStartDate = startDate || now.toISOString().slice(0, 10);
 
-            const fallbackEndDateObj = new Date(finalStartDate);
-            fallbackEndDateObj.setFullYear(fallbackEndDateObj.getFullYear() + 1);
-
-            const finalEndDate = endDate || fallbackEndDateObj.toISOString().slice(0, 10);
+            const finalEndDate = endDate || null;
 
             const interval = parseInterval(repeatCycle);
 

@@ -32,15 +32,22 @@ public class RoutineService {
 
     @Transactional
     public void createRoutine(CreateRoutineRequest req) {
+        if (req.getInterval() == null || req.getInterval() <= 0) {
+            throw new IllegalArgumentException("interval은 1 이상이어야 합니다.");
+        }
 
         GoalPlan goalPlan = goalPlanRepository.findById(req.getGoalPlanId())
                 .orElseThrow(() -> new NotFoundException("GoalPlan 없음"));
+
+        LocalDate finalEndDate = req.getEndDate() != null
+                ? req.getEndDate()
+                : goalPlan.getEndDate();
 
         Routine routine = new Routine();
         routine.setGoalPlan(goalPlan);
         routine.setTitle(req.getTitle());
         routine.setStartDate(req.getStartDate());
-        routine.setEndDate(req.getEndDate());
+        routine.setEndDate(finalEndDate);
         routine.setInterval(req.getInterval());
         routine.setTime(req.getTime());
         routine.setNextTargetDate(LocalDate.now());
@@ -52,7 +59,10 @@ public class RoutineService {
     private void generateDailyTasksFromRoutine(Routine routine) {
 
         LocalDate date = routine.getStartDate();
-
+        int interval = routine.getInterval();
+        if (interval <= 0) {
+            interval = 1; // 최소 1일 보장
+        }
         while (!date.isAfter(routine.getEndDate())) {
 
             boolean exists = dailyTaskRepository
@@ -69,7 +79,7 @@ public class RoutineService {
                 dailyTaskRepository.save(task);
             }
 
-            date = date.plusDays(routine.getInterval());
+            date = date.plusDays(interval);
         }
     }
 
